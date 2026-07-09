@@ -136,3 +136,16 @@ ALTER TABLE active_semesters DISABLE ROW LEVEL SECURITY;
 ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE submissions DISABLE ROW LEVEL SECURITY;
 
+-- Grant API permissions to anon, authenticated, and service_role
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE classes TO anon, authenticated, service_role;
+GRANT ALL ON TABLE subjects TO anon, authenticated, service_role;
+GRANT ALL ON TABLE lecturer_assignments TO anon, authenticated, service_role;
+GRANT ALL ON TABLE custom_questions TO anon, authenticated, service_role;
+GRANT ALL ON TABLE active_semesters TO anon, authenticated, service_role;
+GRANT ALL ON TABLE settings TO anon, authenticated, service_role;
+GRANT ALL ON TABLE submissions TO anon, authenticated, service_role;
+
+
