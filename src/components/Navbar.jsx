@@ -47,7 +47,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           fontFamily: 'var(--font-display)',
           letterSpacing: '0.05em'
         }}>
-          AURA ACADEMIA
+          LIMKOKWING
         </span>
       </div>
 
