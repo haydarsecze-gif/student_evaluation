@@ -61,8 +61,6 @@ export const AppStateProvider = ({ children }) => {
   // Fetch all tables from Supabase on mount
   const fetchAllData = async () => {
     try {
-      setLoading(true);
-      
       const [
         resLecturers,
         resClasses,
@@ -149,13 +147,17 @@ export const AppStateProvider = ({ children }) => {
     } catch (err) {
       console.error("Supabase Database load error:", err);
       setFetchError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Initial fetch on mount
   useEffect(() => {
-    fetchAllData();
+    const init = async () => {
+      setLoading(true);
+      await fetchAllData();
+      setLoading(false);
+    };
+    init();
   }, []);
 
   // Update Settings (Form Active Status)
@@ -166,7 +168,7 @@ export const AppStateProvider = ({ children }) => {
         .update({ value: val })
         .eq('key', 'formActive');
       if (error) throw error;
-      setFormActive(val);
+      await fetchAllData();
     } catch (err) {
       console.error("Error toggling portal status:", err);
       showAlert("Database error: " + err.message);
@@ -181,7 +183,7 @@ export const AppStateProvider = ({ children }) => {
         .update({ value: newPwd })
         .eq('key', 'adminPassword');
       if (error) throw error;
-      setAdminPassword(newPwd);
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating admin password:", err);
       showAlert("Database error: " + err.message);
@@ -198,9 +200,8 @@ export const AppStateProvider = ({ children }) => {
       const { data, error } = await supabase.from('lecturers').insert([{ name: trimmed }]).select();
       if (error) throw error;
 
-      const newL = data[0];
-      setLecturers(prev => [...prev, newL].sort((a, b) => a.name.localeCompare(b.name)));
-      return newL;
+      await fetchAllData();
+      return data[0];
     } catch (err) {
       console.error("Error adding lecturer:", err);
       showAlert("Database error: " + err.message);
@@ -215,7 +216,7 @@ export const AppStateProvider = ({ children }) => {
         .update({ name: updatedL.name.trim() })
         .eq('id', updatedL.id);
       if (error) throw error;
-      setLecturers(prev => prev.map(l => l.id === updatedL.id ? updatedL : l).sort((a, b) => a.name.localeCompare(b.name)));
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating lecturer:", err);
       showAlert("Database error: " + err.message);
@@ -226,9 +227,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('lecturers').delete().eq('id', id);
       if (error) throw error;
-      setLecturers(prev => prev.filter(l => l.id !== id));
-      // Cascade deletions in classes referencing it
-      setClasses(prev => prev.filter(c => c.lecturerId !== id));
+      await fetchAllData();
     } catch (err) {
       console.error("Error deleting lecturer:", err);
       showAlert("Database error: " + err.message);
@@ -260,19 +259,9 @@ export const AppStateProvider = ({ children }) => {
         year: cls.year,
         semester: cls.semester
       };
-      const { data, error } = await supabase.from('classes').insert([dbCls]).select();
+      const { error } = await supabase.from('classes').insert([dbCls]);
       if (error) throw error;
-
-      const localCls = data.map(item => ({
-        id: item.id,
-        name: item.name,
-        code: item.code,
-        subjectId: item.subject_id,
-        lecturerId: item.lecturer_id,
-        year: item.year,
-        semester: item.semester
-      }));
-      setClasses(prev => [...prev, ...localCls]);
+      await fetchAllData();
     } catch (err) {
       console.error("Error creating class:", err);
       showAlert("Database error: " + err.message);
@@ -291,8 +280,7 @@ export const AppStateProvider = ({ children }) => {
       };
       const { error } = await supabase.from('classes').update(dbCls).eq('id', cls.id);
       if (error) throw error;
-      
-      setClasses(prev => prev.map(item => item.id === cls.id ? cls : item));
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating class:", err);
       showAlert("Database error: " + err.message);
@@ -303,8 +291,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('classes').delete().eq('id', id);
       if (error) throw error;
-      setClasses(prev => prev.filter(cls => cls.id !== id));
-      setSubmissions(prev => prev.filter(subm => subm.classId !== id));
+      await fetchAllData();
     } catch (err) {
       console.error("Error deleting class:", err);
       showAlert("Database error: " + err.message);
@@ -314,9 +301,9 @@ export const AppStateProvider = ({ children }) => {
   // CRUD for Subjects
   const addSubject = async (sub) => {
     try {
-      const { data, error } = await supabase.from('subjects').insert([sub]).select();
+      const { error } = await supabase.from('subjects').insert([sub]);
       if (error) throw error;
-      setSubjects(prev => [...prev, ...data]);
+      await fetchAllData();
     } catch (err) {
       console.error("Error creating subject:", err);
       showAlert("Database error: " + err.message);
@@ -327,7 +314,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('subjects').update(updatedSub).eq('id', updatedSub.id);
       if (error) throw error;
-      setSubjects(prev => prev.map(sub => sub.id === updatedSub.id ? updatedSub : sub));
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating subject:", err);
       showAlert("Database error: " + err.message);
@@ -338,10 +325,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('subjects').delete().eq('id', id);
       if (error) throw error;
-      setSubjects(prev => prev.filter(sub => sub.id !== id));
-      setSubmissions(prev => prev.filter(subm => subm.subjectId !== id));
-      // Cascade delete to classes using this subject
-      setClasses(prev => prev.filter(cls => cls.subjectId !== id));
+      await fetchAllData();
     } catch (err) {
       console.error("Error deleting subject:", err);
       showAlert("Database error: " + err.message);
@@ -351,9 +335,9 @@ export const AppStateProvider = ({ children }) => {
   // CRUD for Custom Questions
   const addQuestion = async (q) => {
     try {
-      const { data, error } = await supabase.from('custom_questions').insert([q]).select();
+      const { error } = await supabase.from('custom_questions').insert([q]);
       if (error) throw error;
-      setCustomQuestions(prev => [...prev, ...data]);
+      await fetchAllData();
     } catch (err) {
       console.error("Error creating form question:", err);
       showAlert("Database error: " + err.message);
@@ -364,7 +348,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('custom_questions').update(updatedQ).eq('id', updatedQ.id);
       if (error) throw error;
-      setCustomQuestions(prev => prev.map(q => q.id === updatedQ.id ? updatedQ : q));
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating question:", err);
       showAlert("Database error: " + err.message);
@@ -375,7 +359,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('custom_questions').delete().eq('id', id);
       if (error) throw error;
-      setCustomQuestions(prev => prev.filter(q => q.id !== id));
+      await fetchAllData();
     } catch (err) {
       console.error("Error deleting question:", err);
       showAlert("Database error: " + err.message);
@@ -396,11 +380,7 @@ export const AppStateProvider = ({ children }) => {
         .eq('program', program);
         
       if (error) throw error;
-
-      setActiveSemesters(prev => ({
-        ...prev,
-        [program]: updatedList
-      }));
+      await fetchAllData();
     } catch (err) {
       console.error("Error updating active semesters:", err);
       showAlert("Database error: " + err.message);
@@ -423,25 +403,9 @@ export const AppStateProvider = ({ children }) => {
         custom_answers: subm.customAnswers || {}
       };
 
-      const { data, error } = await supabase.from('submissions').insert([dbSubm]).select();
+      const { error } = await supabase.from('submissions').insert([dbSubm]);
       if (error) throw error;
-
-      const localS = data.map(s => ({
-        id: s.id,
-        name: s.name,
-        email: s.email,
-        phone: s.phone,
-        program: s.program,
-        semester: s.semester,
-        classId: s.class_id,
-        subjectId: s.subject_id,
-        score: s.score,
-        lecturer: s.lecturer,
-        timestamp: s.timestamp,
-        customAnswers: s.custom_answers
-      }))[0];
-
-      setSubmissions(prev => [localS, ...prev]);
+      await fetchAllData();
     } catch (err) {
       console.error("Error registering student performance:", err);
       showAlert("Database error: " + err.message);
@@ -452,7 +416,7 @@ export const AppStateProvider = ({ children }) => {
     try {
       const { error } = await supabase.from('submissions').delete().eq('id', id);
       if (error) throw error;
-      setSubmissions(prev => prev.filter(subm => subm.id !== id));
+      await fetchAllData();
     } catch (err) {
       console.error("Error deleting student record:", err);
       showAlert("Database error: " + err.message);

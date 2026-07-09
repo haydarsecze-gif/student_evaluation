@@ -986,7 +986,13 @@ export default function AdminDashboard() {
                       <select 
                         className="form-input btn-sm"
                         value={newSubProgram}
-                        onChange={(e) => setNewSubProgram(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewSubProgram(val);
+                          if (val === 'foundation' && newSubSemester > 2) {
+                            setNewSubSemester(1);
+                          }
+                        }}
                       >
                         <option value="degree">Degree</option>
                         <option value="foundation">Foundation</option>
@@ -1002,10 +1008,14 @@ export default function AdminDashboard() {
                       >
                         <option value={1}>Semester 1</option>
                         <option value={2}>Semester 2</option>
-                        <option value={3}>Semester 3</option>
-                        <option value={4}>Semester 4</option>
-                        <option value={5}>Semester 5</option>
-                        <option value={6}>Semester 6</option>
+                        {newSubProgram === 'degree' && (
+                          <>
+                            <option value={3}>Semester 3</option>
+                            <option value={4}>Semester 4</option>
+                            <option value={5}>Semester 5</option>
+                            <option value={6}>Semester 6</option>
+                          </>
+                        )}
                       </select>
                     </div>
 
