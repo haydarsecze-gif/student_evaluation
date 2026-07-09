@@ -711,9 +711,13 @@ export default function AdminDashboard() {
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
                   Submission Count per Term
                 </h3>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                  <span>Semester {item.semester}</span>
-                  <span className="badge badge-success">{item.count}</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {semesterMetrics.map(item => (
+                    <div key={item.semester} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                      <span>Semester {item.semester}</span>
+                      <span className="badge badge-success">{item.count}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
