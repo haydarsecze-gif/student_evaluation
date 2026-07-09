@@ -19,13 +19,13 @@ CREATE TABLE subjects (
   program TEXT NOT NULL CHECK (program IN ('foundation', 'degree'))
 );
 
--- 3. Create Classes Table (Linked directly to a Subject/Module and Lecturer)
+-- 3. Create Classes Table (Linked directly to a Subject/Module and multiple Lecturers via UUID array)
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL, -- e.g. "Section A"
   code TEXT NOT NULL, -- e.g. "S2A"
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
-  lecturer_id UUID REFERENCES lecturers(id) ON DELETE CASCADE,
+  lecturer_ids UUID[] NOT NULL DEFAULT '{}',
   year INTEGER NOT NULL,
   semester INTEGER NOT NULL
 );
@@ -63,7 +63,7 @@ CREATE TABLE submissions (
   class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
   score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
-  lecturer TEXT NOT NULL, -- Keep lecturer as text for historical submission logs
+  lecturer TEXT NOT NULL, -- Keep lecturer as text list for historical submission logs
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   custom_answers JSONB NOT NULL DEFAULT '{}'::jsonb
 );
@@ -105,13 +105,13 @@ VALUES
   ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 2, 'degree')
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Classes (Each class represents a cohort taking a subject, with lecturer assigned)
-INSERT INTO classes (id, name, code, subject_id, lecturer_id, year, semester)
+-- Seed Classes (Each class represents a cohort taking a subject, with multiple lecturers assigned)
+INSERT INTO classes (id, name, code, subject_id, lecturer_ids, year, semester)
 VALUES
-  ('c1c1c1c1-1111-1111-1111-111111111111', 'Section S1A', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 1, 1),
-  ('c2c2c2c2-2222-2222-2222-222222222222', 'Section S1B', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', 'd2222222-2222-2222-2222-222222222222', 1, 1),
-  ('c3c3c3c3-3333-3333-3333-333333333333', 'Section S2A', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', 'd3333333-3333-3333-3333-333333333333', 1, 2),
-  ('c4c4c4c4-4444-4444-4444-444444444444', 'Section S2B', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', 'd4444444-4444-4444-4444-444444444444', 1, 2)
+  ('c1c1c1c1-1111-1111-1111-111111111111', 'Section S1A', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d1111111-1111-1111-1111-111111111111']::UUID[], 1, 1),
+  ('c2c2c2c2-2222-2222-2222-222222222222', 'Section S1B', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d2222222-2222-2222-2222-222222222222']::UUID[], 1, 1),
+  ('c3c3c3c3-3333-3333-3333-333333333333', 'Section S2A', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d3333333-3333-3333-3333-333333333333', 'd4444444-4444-4444-4444-444444444444']::UUID[], 1, 2), -- Taught by two lecturers
+  ('c4c4c4c4-4444-4444-4444-444444444444', 'Section S2B', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d4444444-4444-4444-4444-444444444444']::UUID[], 1, 2)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Custom Questions

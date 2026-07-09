@@ -57,7 +57,7 @@ export default function AdminDashboard() {
   const [classSubjectId, setClassSubjectId] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
-  const [newClassLecturer, setNewClassLecturer] = useState('');
+  const [newClassLecturer, setNewClassLecturer] = useState(''); // comma-separated input list
 
   // Form states for Subjects (Modules)
   const [editingSubject, setEditingSubject] = useState(null);
@@ -177,7 +177,7 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, `Student_Evaluation_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  // Add or Edit Class (Auto-creates Lecturer if not exists)
+  // Add or Edit Class (Auto-creates multiple Lecturers split by commas)
   const handleClassSubmit = async (e) => {
     e.preventDefault();
     if (!classSubjectId) {
@@ -185,7 +185,7 @@ export default function AdminDashboard() {
       return;
     }
     if (!newClassCode.trim() || !newClassName.trim() || !newClassLecturer.trim()) {
-      setCrudError('Class Code, Section Name, and Lecturer Name are required.');
+      setCrudError('Class Code, Section Name, and at least one Lecturer are required.');
       return;
     }
 
@@ -196,10 +196,17 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Ensure the Lecturer exists in database, creating if new
-    const lecturerId = await ensureLecturerExists(newClassLecturer);
-    if (!lecturerId) {
-      setCrudError('Error assigning lecturer name.');
+    // Parse comma-separated names
+    const names = newClassLecturer.split(',').map(n => n.trim()).filter(Boolean);
+    if (names.length === 0) {
+      setCrudError('At least one lecturer name must be provided.');
+      return;
+    }
+
+    // Ensure all lecturers exist and obtain their IDs
+    const lecturerIds = await Promise.all(names.map(name => ensureLecturerExists(name)));
+    if (lecturerIds.some(id => !id)) {
+      setCrudError('Error resolving one or more lecturer profiles.');
       return;
     }
 
@@ -211,7 +218,7 @@ export default function AdminDashboard() {
       name: newClassName.trim(),
       code: newClassCode.trim().toUpperCase(),
       subjectId: classSubjectId,
-      lecturerId: lecturerId,
+      lecturerIds: lecturerIds,
       year: targetYear,
       semester: targetSemester
     };
@@ -239,8 +246,16 @@ export default function AdminDashboard() {
     setClassSubjectId(cls.subjectId);
     setNewClassName(cls.name);
     setNewClassCode(cls.code);
-    const lecturerObj = lecturers.find(l => l.id === cls.lecturerId);
-    setNewClassLecturer(lecturerObj ? lecturerObj.name : '');
+    
+    // Map IDs to names list
+    const lecturerNames = (cls.lecturerIds || [])
+      .map(id => {
+        const l = lecturers.find(lec => lec.id === id);
+        return l ? l.name : '';
+      })
+      .filter(Boolean)
+      .join(', ');
+    setNewClassLecturer(lecturerNames);
     setCrudError('');
   };
 
@@ -718,7 +733,7 @@ export default function AdminDashboard() {
                         <th>Class Code</th>
                         <th>Class Name</th>
                         <th>Subject (Module)</th>
-                        <th>Lecturer</th>
+                        <th>Lecturer(s)</th>
                         <th>Term / Cycle</th>
                         <th style={{ textAlign: 'center', width: '130px' }}>Actions</th>
                       </tr>
@@ -726,7 +741,15 @@ export default function AdminDashboard() {
                     <tbody>
                       {classes.map(cls => {
                         const subjectObj = subjects.find(s => s.id === cls.subjectId);
-                        const lecturerObj = lecturers.find(l => l.id === cls.lecturerId);
+                        
+                        // Retrieve name for all assigned lecturers
+                        const classLecturers = (cls.lecturerIds || [])
+                          .map(id => lecturers.find(l => l.id === id))
+                          .filter(Boolean);
+                        const lecturerDisplay = classLecturers.length > 0
+                          ? classLecturers.map(l => l.name).join(', ')
+                          : 'Unknown Lecturer';
+
                         return (
                           <tr key={cls.id}>
                             <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
@@ -741,8 +764,8 @@ export default function AdminDashboard() {
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned Module</span>
                               )}
                             </td>
-                            <td style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                              {lecturerObj ? lecturerObj.name : 'Unknown Lecturer'}
+                            <td style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.85rem' }}>
+                              {lecturerDisplay}
                             </td>
                             <td style={{ fontSize: '0.85rem' }}>
                               Year {cls.year || 1} &bull; Sem {cls.semester || 1} 
@@ -839,12 +862,12 @@ export default function AdminDashboard() {
 
                       {/* Autocomplete Lecturer input box utilizing browser native datalist */}
                       <div className="form-group">
-                        <label className="form-label">Assigned Lecturer</label>
+                        <label className="form-label">Assigned Lecturer(s)</label>
                         <input
                           type="text"
                           list="lecturer-suggestions"
                           className="form-input btn-sm"
-                          placeholder="Type or select existing lecturer..."
+                          placeholder="Separate multiple names with commas..."
                           value={newClassLecturer}
                           onChange={(e) => setNewClassLecturer(e.target.value)}
                         />
@@ -853,7 +876,7 @@ export default function AdminDashboard() {
                             <option key={l.id} value={l.name} />
                           ))}
                         </datalist>
-                        <span className="form-input-hint">If this is a new lecturer name, typing it will automatically add them to the Lecturers list upon saving!</span>
+                        <span className="form-input-hint">For 2-3 lecturers, type their names separated by commas (e.g., Dr. Evelyn, Prof. Turing).</span>
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
@@ -1064,7 +1087,7 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody>
                       {lecturers.map(l => {
-                        const lClasses = classes.filter(c => c.lecturerId === l.id);
+                        const lClasses = classes.filter(c => (c.lecturerIds || []).includes(l.id));
                         return (
                           <tr key={l.id}>
                             <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>

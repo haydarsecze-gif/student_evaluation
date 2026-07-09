@@ -132,8 +132,13 @@ export default function FormPage() {
     const selectedClass = classes.find(c => c.id === classId);
     if (!selectedClass) return;
 
-    const lecturerObj = lecturers.find(l => l.id === selectedClass.lecturerId);
-    const lecturerName = lecturerObj ? lecturerObj.name : 'Unknown Lecturer';
+    // Retrieve names for all linked lecturers
+    const classLecturers = (selectedClass.lecturerIds || [])
+      .map(id => lecturers.find(l => l.id === id))
+      .filter(Boolean);
+    const lecturerName = classLecturers.length > 0
+      ? classLecturers.map(l => l.name).join(', ')
+      : 'Unknown Lecturer';
 
     // Add submission with basic fields + custom answers
     addSubmission({
@@ -353,9 +358,16 @@ export default function FormPage() {
                   </option>
                   {availableClasses.map(c => {
                     const subjectObj = subjects.find(s => s.id === c.subjectId);
-                    const lecturerObj = lecturers.find(l => l.id === c.lecturerId);
+                    
+                    // Retrieve names for all linked lecturers
+                    const classLecturers = (c.lecturerIds || [])
+                      .map(id => lecturers.find(l => l.id === id))
+                      .filter(Boolean);
+                    const lecturerDisplay = classLecturers.length > 0
+                      ? classLecturers.map(l => l.name).join(', ')
+                      : 'Unknown Lecturer';
+
                     const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
-                    const lecturerDisplay = lecturerObj ? lecturerObj.name : 'Unknown Lecturer';
                     return (
                       <option key={c.id} value={c.id}>
                         {subjectDisplay} [Class: {c.code}] - {lecturerDisplay}
@@ -369,7 +381,7 @@ export default function FormPage() {
 
             {/* Performance (Slider) */}
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
                 <label className="form-label">Performance / Score</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{score}</span>

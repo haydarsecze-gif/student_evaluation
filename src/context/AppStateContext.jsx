@@ -98,7 +98,7 @@ export const AppStateProvider = ({ children }) => {
         name: cls.name,
         code: cls.code,
         subjectId: cls.subject_id,
-        lecturerId: cls.lecturer_id,
+        lecturerIds: cls.lecturer_ids || [], // support multiple lecturers via UUID array
         year: cls.year,
         semester: cls.semester
       }));
@@ -255,7 +255,7 @@ export const AppStateProvider = ({ children }) => {
         name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
-        lecturer_id: cls.lecturerId,
+        lecturer_ids: cls.lecturerIds || [],
         year: cls.year,
         semester: cls.semester
       };
@@ -274,7 +274,7 @@ export const AppStateProvider = ({ children }) => {
         name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
-        lecturer_id: cls.lecturerId,
+        lecturer_ids: cls.lecturerIds || [],
         year: cls.year,
         semester: cls.semester
       };
