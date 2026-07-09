@@ -198,8 +198,8 @@ function AppContent() {
         color: 'var(--text-muted)'
       }}>
         <div>&copy; {new Date().getFullYear()} Limkokwing. All rights reserved.</div>
-        <div style={{ marginTop: '0.25rem', fontSize: '0.75rem' }}>
-          Supabase Database Synced. Program Cycle Rules: Foundation (2 Semesters) &amp; Degree (6 Semesters).
+        <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', textTransform: 'lowercase' }}>
+          made by sora
         </div>
       </footer>
 
