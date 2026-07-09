@@ -10,6 +10,7 @@ export const AppStateProvider = ({ children }) => {
   const [formActive, setFormActive] = useState(true);
   const [adminPassword, setAdminPassword] = useState('admin123'); // Default password
   const [classes, setClasses] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [lecturerAssignments, setLecturerAssignments] = useState([]);
   const [customQuestions, setCustomQuestions] = useState([]);
@@ -25,6 +26,7 @@ export const AppStateProvider = ({ children }) => {
       
       const [
         resClasses,
+        resSubjects,
         resAssignments,
         resQuestions,
         resSemesters,
@@ -32,6 +34,7 @@ export const AppStateProvider = ({ children }) => {
         resSubmissions
       ] = await Promise.all([
         supabase.from('classes').select('*').order('name'),
+        supabase.from('subjects').select('*').order('code'),
         supabase.from('lecturer_assignments').select('*'),
         supabase.from('custom_questions').select('*').order('created_at'),
         supabase.from('active_semesters').select('*'),
@@ -40,6 +43,7 @@ export const AppStateProvider = ({ children }) => {
       ]);
 
       if (resClasses.error) throw resClasses.error;
+      if (resSubjects.error) throw resSubjects.error;
       if (resAssignments.error) throw resAssignments.error;
       if (resQuestions.error) throw resQuestions.error;
       if (resSemesters.error) throw resSemesters.error;
@@ -48,6 +52,7 @@ export const AppStateProvider = ({ children }) => {
 
       // Set values
       setClasses(resClasses.data || []);
+      setSubjects(resSubjects.data || []);
       setCustomQuestions(resQuestions.data || []);
       
       // Map assignments to local camelCase structure
@@ -55,7 +60,8 @@ export const AppStateProvider = ({ children }) => {
         id: la.id,
         lecturerName: la.lecturer_name,
         classId: la.class_id,
-        semester: la.semester
+        semester: la.semester,
+        subjectId: la.subject_id
       }));
       setLecturerAssignments(mappedAssignments);
 
@@ -91,6 +97,7 @@ export const AppStateProvider = ({ children }) => {
         program: s.program,
         semester: s.semester,
         classId: s.class_id,
+        subjectId: s.subject_id,
         score: s.score,
         lecturer: s.lecturer,
         timestamp: s.timestamp,
@@ -140,7 +147,7 @@ export const AppStateProvider = ({ children }) => {
     }
   };
 
-  // CRUD for Classes (representing Class/Subject combined model)
+  // CRUD for Classes
   const addClass = async (cls) => {
     try {
       const { data, error } = await supabase.from('classes').insert([cls]).select();
@@ -176,13 +183,50 @@ export const AppStateProvider = ({ children }) => {
     }
   };
 
+  // CRUD for Subjects
+  const addSubject = async (sub) => {
+    try {
+      const { data, error } = await supabase.from('subjects').insert([sub]).select();
+      if (error) throw error;
+      setSubjects(prev => [...prev, ...data]);
+    } catch (err) {
+      console.error("Error creating subject:", err);
+      alert("Database error: " + err.message);
+    }
+  };
+
+  const updateSubject = async (updatedSub) => {
+    try {
+      const { error } = await supabase.from('subjects').update(updatedSub).eq('id', updatedSub.id);
+      if (error) throw error;
+      setSubjects(prev => prev.map(sub => sub.id === updatedSub.id ? updatedSub : sub));
+    } catch (err) {
+      console.error("Error updating subject:", err);
+      alert("Database error: " + err.message);
+    }
+  };
+
+  const deleteSubject = async (id) => {
+    try {
+      const { error } = await supabase.from('subjects').delete().eq('id', id);
+      if (error) throw error;
+      setSubjects(prev => prev.filter(sub => sub.id !== id));
+      setSubmissions(prev => prev.filter(subm => subm.subjectId !== id));
+      setLecturerAssignments(prev => prev.filter(la => la.subjectId !== id));
+    } catch (err) {
+      console.error("Error deleting subject:", err);
+      alert("Database error: " + err.message);
+    }
+  };
+
   // CRUD for Lecturer Assignments
   const addLecturerAssignment = async (la) => {
     try {
       const dbLa = {
         lecturer_name: la.lecturerName,
         class_id: la.classId,
-        semester: la.semester
+        semester: la.semester,
+        subject_id: la.subjectId
       };
       const { data, error } = await supabase.from('lecturer_assignments').insert([dbLa]).select();
       if (error) throw error;
@@ -191,7 +235,8 @@ export const AppStateProvider = ({ children }) => {
         id: item.id,
         lecturerName: item.lecturer_name,
         classId: item.class_id,
-        semester: item.semester
+        semester: item.semester,
+        subjectId: item.subject_id
       }));
       setLecturerAssignments(prev => [...prev, ...localLa]);
     } catch (err) {
@@ -280,6 +325,7 @@ export const AppStateProvider = ({ children }) => {
         program: subm.program,
         semester: subm.semester,
         class_id: subm.classId,
+        subject_id: subm.subjectId,
         score: subm.score,
         lecturer: subm.lecturer,
         custom_answers: subm.customAnswers || {}
@@ -296,6 +342,7 @@ export const AppStateProvider = ({ children }) => {
         program: s.program,
         semester: s.semester,
         classId: s.class_id,
+        subjectId: s.subject_id,
         score: s.score,
         lecturer: s.lecturer,
         timestamp: s.timestamp,
@@ -320,13 +367,21 @@ export const AppStateProvider = ({ children }) => {
     }
   };
 
+  // Academic subject logic filtering (Return all subjects matching the exact semester)
+  const getSubjectsBySemester = (semester) => {
+    if (!semester) return [];
+    const semNum = parseInt(semester, 10);
+    return subjects.filter(sub => parseInt(sub.semester, 10) === semNum);
+  };
+
   // Smart lecturer selector mapping
-  const getLecturersForConfig = (classId, semester) => {
-    if (!classId || !semester) return [];
+  const getLecturersForConfig = (classId, semester, subjectId) => {
+    if (!classId || !semester || !subjectId) return [];
     const semNum = parseInt(semester, 10);
     return lecturerAssignments.filter(la => 
       la.classId === classId && 
-      parseInt(la.semester, 10) === semNum
+      parseInt(la.semester, 10) === semNum &&
+      la.subjectId === subjectId
     );
   };
 
@@ -342,9 +397,14 @@ export const AppStateProvider = ({ children }) => {
       addClass,
       updateClass,
       deleteClass,
+      subjects,
+      addSubject,
+      updateSubject,
+      deleteSubject,
       submissions,
       addSubmission,
       deleteSubmission,
+      getSubjectsBySemester,
       
       // Lecturer Assignments
       lecturerAssignments,

@@ -6,6 +6,7 @@ export default function FormPage() {
     formActive,
     classes,
     addSubmission,
+    getSubjectsBySemester,
     getLecturersForConfig,
     customQuestions,
     activeSemesters
@@ -18,6 +19,7 @@ export default function FormPage() {
   const [program, setProgram] = useState(''); // 'foundation' | 'degree'
   const [semester, setSemester] = useState('');
   const [classId, setClassId] = useState('');
+  const [subjectId, setSubjectId] = useState('');
   const [score, setScore] = useState(80);
   const [lecturer, setLecturer] = useState('');
 
@@ -28,13 +30,13 @@ export default function FormPage() {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Available Lecturers filtered by Class + Semester
+  // Available Lecturers filtered by Class + Semester + Subject
   const [availableLecturers, setAvailableLecturers] = useState([]);
 
-  // Filter lecturers when class or semester changes
+  // Filter lecturers when class, semester, or subject changes
   useEffect(() => {
-    if (classId && semester) {
-      const lecturers = getLecturersForConfig(classId, semester);
+    if (classId && semester && subjectId) {
+      const lecturers = getLecturersForConfig(classId, semester, subjectId);
       setAvailableLecturers(lecturers);
       // Auto-select if there is exactly 1 lecturer
       if (lecturers.length === 1) {
@@ -46,19 +48,24 @@ export default function FormPage() {
       setAvailableLecturers([]);
       setLecturer('');
     }
-  }, [classId, semester, getLecturersForConfig]);
+  }, [classId, semester, subjectId, getLecturersForConfig]);
 
-  // Reset semester and class when program changes
+  // Reset semester, subject, and class when program changes
   useEffect(() => {
     setSemester('');
+    setSubjectId('');
     setClassId('');
   }, [program]);
 
-  // Reset class when semester changes
+  // Reset subject and class when semester changes
   useEffect(() => {
+    setSubjectId('');
     setClassId('');
   }, [semester]);
 
+  // Get subjects matching the semester
+  const availableSubjects = getSubjectsBySemester(semester);
+  
   // Filter classes matching the selected semester
   const availableClasses = classes.filter(c => parseInt(c.semester, 10) === parseInt(semester, 10));
 
@@ -117,11 +124,12 @@ export default function FormPage() {
 
     if (!program) tempErrors.program = 'Please select a program';
     if (!semester) tempErrors.semester = 'Please select a semester';
-    if (!classId) tempErrors.classId = 'Please select a Class / Subject';
+    if (!classId) tempErrors.classId = 'Please select a class';
+    if (!subjectId) tempErrors.subjectId = 'Please select a subject';
     
     // Lecturer validation - only required if there are lecturers assigned
-    if (classId && semester) {
-      const assigned = getLecturersForConfig(classId, semester);
+    if (classId && semester && subjectId) {
+      const assigned = getLecturersForConfig(classId, semester, subjectId);
       if (assigned.length > 0 && !lecturer) {
         tempErrors.lecturer = 'Please select a lecturer';
       }
@@ -159,6 +167,7 @@ export default function FormPage() {
       program,
       semester: parseInt(semester, 10),
       classId,
+      subjectId,
       score: parseInt(score, 10),
       lecturer,
       customAnswers
@@ -171,6 +180,7 @@ export default function FormPage() {
     setProgram('');
     setSemester('');
     setClassId('');
+    setSubjectId('');
     setScore(80);
     setLecturer('');
     setCustomAnswers({});
@@ -320,7 +330,7 @@ export default function FormPage() {
               {errors.program && <span className="form-input-error-msg">{errors.program}</span>}
             </div>
 
-            {/* Semester & Class/Subject */}
+            {/* Semester & Class */}
             <div className="grid-cols-2">
               <div className="form-group">
                 <label className="form-label">
@@ -354,7 +364,7 @@ export default function FormPage() {
 
               <div className="form-group">
                 <label className="form-label">
-                  Class / Subject <span className="required">*</span>
+                  Class Name / Section <span className="required">*</span>
                 </label>
                 <div className="select-wrapper">
                   <select
@@ -365,7 +375,7 @@ export default function FormPage() {
                     style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                   >
                     <option value="">
-                      {!semester ? 'Select Semester first' : 'Select Class / Subject'}
+                      {!semester ? 'Select Semester first' : 'Select Class'}
                     </option>
                     {availableClasses.map(c => (
                       <option key={c.id} value={c.id}>
@@ -378,6 +388,32 @@ export default function FormPage() {
               </div>
             </div>
 
+            {/* Subject / Module Select */}
+            <div className="form-group">
+              <label className="form-label">
+                Subject / Module <span className="required">*</span>
+              </label>
+              <div className="select-wrapper">
+                <select
+                  disabled={!semester}
+                  className={`form-input ${errors.subjectId ? 'error' : ''}`}
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                  style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
+                >
+                  <option value="">
+                    {!semester ? 'Select Semester first' : 'Select Subject / Module'}
+                  </option>
+                  {availableSubjects.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} ({s.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.subjectId && <span className="form-input-error-msg">{errors.subjectId}</span>}
+            </div>
+
             {/* Smart Lecturer Dropdown */}
             <div className="form-group">
               <label className="form-label">
@@ -385,15 +421,15 @@ export default function FormPage() {
               </label>
               <div className="select-wrapper">
                 <select
-                  disabled={!classId || !semester}
+                  disabled={!classId || !semester || !subjectId}
                   className={`form-input ${errors.lecturer ? 'error' : ''}`}
                   value={lecturer}
                   onChange={(e) => setLecturer(e.target.value)}
-                  style={(!classId || !semester) ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
+                  style={(!classId || !semester || !subjectId) ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                 >
                   <option value="">
-                    {(!classId || !semester) 
-                      ? 'Complete Semester and Class / Subject selections first' 
+                    {(!classId || !semester || !subjectId) 
+                      ? 'Complete Class, Semester, and Subject selections first' 
                       : availableLecturers.length === 0 
                         ? 'No Lecturers assigned' 
                         : 'Select Assigned Lecturer'}
@@ -406,16 +442,16 @@ export default function FormPage() {
                 </select>
               </div>
               {errors.lecturer && <span className="form-input-error-msg">{errors.lecturer}</span>}
-              {classId && semester && availableLecturers.length === 0 && (
+              {classId && semester && subjectId && availableLecturers.length === 0 && (
                 <div style={{ marginTop: '0.25rem', color: '#d97706', fontSize: '0.75rem' }}>
-                  <span>Admin must assign a Lecturer to this Class / Subject.</span>
+                  <span>Admin must create a Lecturer Assignment for this configuration.</span>
                 </div>
               )}
             </div>
 
             {/* Performance (Slider) */}
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label className="form-label">Performance / Score</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{score}</span>
