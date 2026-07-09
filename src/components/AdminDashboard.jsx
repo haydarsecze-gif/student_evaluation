@@ -35,6 +35,7 @@ export default function AdminDashboard() {
 
   // Tab controller for Admin Console
   const [adminTab, setAdminTab] = useState('records'); // 'records' | 'classes' | 'formDesign'
+  const [classesSubTab, setClassesSubTab] = useState('classesList'); // 'classesList' | 'subjectsList'
 
   // Master Logs Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -725,319 +726,340 @@ export default function AdminDashboard() {
 
       {/* TAB CONTENT: UNIFIED CLASSES & LECTURERS & SUBJECTS */}
       {adminTab === 'classes' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
-          {/* SECTION 1: CLASSES MANAGER */}
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              Manage Classes (Opened Sections)
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
-              <div className="table-container glass-panel">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Class Code</th>
-                      <th>Class Name</th>
-                      <th>Year / Semester</th>
-                      <th>Subjects &amp; Lecturers</th>
-                      <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {classes.map(cls => (
-                      <tr key={cls.id}>
-                        <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
-                        <td>{cls.name}</td>
-                        <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
-                        <td>
-                          {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).map(s => {
-                            const la = lecturerAssignments.filter(la => la.classId === cls.id && la.subjectId === s.id);
-                            return (
-                              <div key={s.id} style={{ fontSize: '0.75rem', marginBottom: '0.2rem' }}>
-                                <strong style={{ color: 'var(--text-secondary)' }}>{s.code}:</strong>{' '}
-                                {la.length > 0 ? (
-                                  <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                                    {la.map(item => item.lecturerName).join(', ')}
-                                  </span>
-                                ) : (
-                                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
-                                )}
-                              </div>
-                            );
-                          })}
-                          {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).length === 0 && (
-                            <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No subjects in Sem {cls.semester}</span>
-                          )}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+          {/* Classes Sub-Tabs */}
+          <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+            <button
+              onClick={() => setClassesSubTab('classesList')}
+              className={`btn btn-sm ${classesSubTab === 'classesList' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+            >
+              Classes &amp; Lecturers ({classes.length})
+            </button>
+            <button
+              onClick={() => setClassesSubTab('subjectsList')}
+              className={`btn btn-sm ${classesSubTab === 'subjectsList' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+            >
+              Subjects / Modules Catalog ({subjects.length})
+            </button>
+          </div>
+
+          {classesSubTab === 'classesList' && (
+            /* SECTION 1: CLASSES MANAGER */
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Manage Classes (Opened Sections)
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+                <div className="table-container glass-panel">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Class Code</th>
+                        <th>Class Name</th>
+                        <th>Year / Semester</th>
+                        <th>Subjects &amp; Lecturers</th>
+                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {classes.map(cls => (
+                        <tr key={cls.id}>
+                          <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
+                          <td>{cls.name}</td>
+                          <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
+                          <td>
+                            {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).map(s => {
+                              const la = lecturerAssignments.filter(la => la.classId === cls.id && la.subjectId === s.id);
+                              return (
+                                <div key={s.id} style={{ fontSize: '0.75rem', marginBottom: '0.2rem' }}>
+                                  <strong style={{ color: 'var(--text-secondary)' }}>{s.code}:</strong>{' '}
+                                  {la.length > 0 ? (
+                                    <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                                      {la.map(item => item.lecturerName).join(', ')}
+                                    </span>
+                                  ) : (
+                                    <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                            {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).length === 0 && (
+                              <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No subjects in Sem {cls.semester}</span>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                              <button
+                                onClick={() => {
+                                  setEditingClass(null);
+                                  setActiveAssignmentClassId(cls.id);
+                                }}
+                                className={`btn btn-secondary btn-sm ${activeAssignmentClassId === cls.id ? 'btn-primary' : ''}`}
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Assign Lecturers"
+                              >
+                                Assign
+                              </button>
+                              <button
+                                onClick={() => startEditClass(cls)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Edit Class"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions & assignments belonging to this class. Proceed?`)) {
+                                    deleteClass(cls.id);
+                                  }
+                                }}
+                                className="btn btn-secondary btn-sm btn-danger"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Delete Class"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {activeAssignmentClassId ? (
+                    renderAssignmentsManager(classes.find(c => c.id === activeAssignmentClassId))
+                  ) : (
+                    /* Create or Edit Class Card */
+                    <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                        {editingClass ? 'Edit Class Configuration' : 'Create Class Configuration'}
+                      </h3>
+
+                      {crudError && (
+                        <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                          {crudError}
+                        </div>
+                      )}
+
+                      <form onSubmit={handleClassSubmit}>
+                        <div className="form-group">
+                          <label className="form-label">Class Section Name</label>
+                          <input
+                            type="text"
+                            className="form-input btn-sm"
+                            placeholder="e.g. Computer Science A"
+                            value={newClassName}
+                            onChange={(e) => setNewClassName(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">Class Code</label>
+                          <input
+                            type="text"
+                            className="form-input btn-sm"
+                            placeholder="e.g. CS1A"
+                            value={newClassCode}
+                            onChange={(e) => setNewClassCode(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">Year</label>
+                          <select 
+                            className="form-input btn-sm"
+                            value={newClassYear}
+                            onChange={(e) => setNewClassYear(parseInt(e.target.value, 10))}
+                          >
+                            <option value={1}>Year 1</option>
+                            <option value={2}>Year 2</option>
+                            <option value={3}>Year 3</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label className="form-label">Semester</label>
+                          <select 
+                            className="form-input btn-sm"
+                            value={newClassSemester}
+                            onChange={(e) => setNewClassSemester(parseInt(e.target.value, 10))}
+                          >
+                            <option value={1}>Semester 1</option>
+                            <option value={2}>Semester 2</option>
+                            <option value={3}>Semester 3</option>
+                            <option value={4}>Semester 4</option>
+                            <option value={5}>Semester 5</option>
+                            <option value={6}>Semester 6</option>
+                          </select>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                          <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
+                            {editingClass ? 'Update Class' : 'Create Class'}
+                          </button>
+                          {editingClass && (
                             <button
+                              type="button"
                               onClick={() => {
                                 setEditingClass(null);
-                                setActiveAssignmentClassId(cls.id);
+                                setNewClassName('');
+                                setNewClassCode('');
+                                setNewClassYear(1);
+                                setNewClassSemester(1);
+                                setCrudError('');
                               }}
-                              className={`btn btn-secondary btn-sm ${activeAssignmentClassId === cls.id ? 'btn-primary' : ''}`}
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Assign Lecturers"
-                            >
-                              Assign
-                            </button>
-                            <button
-                              onClick={() => startEditClass(cls)}
                               className="btn btn-secondary btn-sm"
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Edit Class"
                             >
-                              Edit
+                              Cancel
                             </button>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions & assignments belonging to this class. Proceed?`)) {
-                                  deleteClass(cls.id);
-                                }
-                              }}
-                              className="btn btn-secondary btn-sm btn-danger"
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Delete Class"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {activeAssignmentClassId ? (
-                  renderAssignmentsManager(classes.find(c => c.id === activeAssignmentClassId))
-                ) : (
-                  /* Create or Edit Class Card */
-                  <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
-                      {editingClass ? 'Edit Class Configuration' : 'Create Class Configuration'}
-                    </h3>
-
-                    {crudError && (
-                      <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
-                        {crudError}
-                      </div>
-                    )}
-
-                    <form onSubmit={handleClassSubmit}>
-                      <div className="form-group">
-                        <label className="form-label">Class Section Name</label>
-                        <input
-                          type="text"
-                          className="form-input btn-sm"
-                          placeholder="e.g. Computer Science A"
-                          value={newClassName}
-                          onChange={(e) => setNewClassName(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Class Code</label>
-                        <input
-                          type="text"
-                          className="form-input btn-sm"
-                          placeholder="e.g. CS1A"
-                          value={newClassCode}
-                          onChange={(e) => setNewClassCode(e.target.value)}
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Year</label>
-                        <select 
-                          className="form-input btn-sm"
-                          value={newClassYear}
-                          onChange={(e) => setNewClassYear(parseInt(e.target.value, 10))}
-                        >
-                          <option value={1}>Year 1</option>
-                          <option value={2}>Year 2</option>
-                          <option value={3}>Year 3</option>
-                        </select>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label">Semester</label>
-                        <select 
-                          className="form-input btn-sm"
-                          value={newClassSemester}
-                          onChange={(e) => setNewClassSemester(parseInt(e.target.value, 10))}
-                        >
-                          <option value={1}>Semester 1</option>
-                          <option value={2}>Semester 2</option>
-                          <option value={3}>Semester 3</option>
-                          <option value={4}>Semester 4</option>
-                          <option value={5}>Semester 5</option>
-                          <option value={6}>Semester 6</option>
-                        </select>
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                        <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
-                          {editingClass ? 'Update Class' : 'Create Class'}
-                        </button>
-                        {editingClass && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingClass(null);
-                              setNewClassName('');
-                              setNewClassCode('');
-                              setNewClassYear(1);
-                              setNewClassSemester(1);
-                              setCrudError('');
-                            }}
-                            className="btn btn-secondary btn-sm"
-                          >
-                            Cancel
-                          </button>
-                        )}
-                      </div>
-                    </form>
-                  </div>
-                )}
+                          )}
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* SECTION 2: SUBJECTS / MODULES MANAGER */}
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-              Manage Subjects (Module Catalog)
-            </h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
-              <div className="table-container glass-panel">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Module Code</th>
-                      <th>Subject Name</th>
-                      <th>Semester Cycle</th>
-                      <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {subjects.map(sub => (
-                      <tr key={sub.id}>
-                        <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{sub.code}</td>
-                        <td>{sub.name}</td>
-                        <td>
-                          <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
-                            Semester {sub.semester}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                            <button
-                              onClick={() => startEditSubject(sub)}
-                              className="btn btn-secondary btn-sm"
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Edit Subject"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (confirm(`Deleting subject "${sub.name}" will automatically cascade and delete all submissions & lecturer assignments associated with it. Proceed?`)) {
-                                  deleteSubject(sub.id);
-                                }
-                              }}
-                              className="btn btn-secondary btn-sm btn-danger"
-                              style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                              title="Delete Subject"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
+          {classesSubTab === 'subjectsList' && (
+            /* SECTION 2: SUBJECTS / MODULES MANAGER */
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Manage Subjects (Module Catalog)
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+                <div className="table-container glass-panel">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Module Code</th>
+                        <th>Subject Name</th>
+                        <th>Semester Cycle</th>
+                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {subjects.map(sub => (
+                        <tr key={sub.id}>
+                          <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{sub.code}</td>
+                          <td>{sub.name}</td>
+                          <td>
+                            <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
+                              Semester {sub.semester}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'center' }}>
+                            <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                              <button
+                                onClick={() => startEditSubject(sub)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Edit Subject"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Deleting subject "${sub.name}" will automatically cascade and delete all submissions & lecturer assignments associated with it. Proceed?`)) {
+                                    deleteSubject(sub.id);
+                                  }
+                                }}
+                                className="btn btn-secondary btn-sm btn-danger"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="Delete Subject"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-              <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
-                  {editingSubject ? 'Edit Subject Details' : 'Register New Subject'}
-                </h3>
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                    {editingSubject ? 'Edit Subject Details' : 'Register New Subject'}
+                  </h3>
 
-                {crudError && (
-                  <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
-                    {crudError}
-                  </div>
-                )}
+                  {crudError && (
+                    <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                      {crudError}
+                    </div>
+                  )}
 
-                <form onSubmit={handleSubjectSubmit}>
-                  <div className="form-group">
-                    <label className="form-label">Subject Name</label>
-                    <input
-                      type="text"
-                      className="form-input btn-sm"
-                      placeholder="e.g. Introduction to Programming"
-                      value={newSubName}
-                      onChange={(e) => setNewSubName(e.target.value)}
-                    />
-                  </div>
+                  <form onSubmit={handleSubjectSubmit}>
+                    <div className="form-group">
+                      <label className="form-label">Subject Name</label>
+                      <input
+                        type="text"
+                        className="form-input btn-sm"
+                        placeholder="e.g. Introduction to Programming"
+                        value={newSubName}
+                        onChange={(e) => setNewSubName(e.target.value)}
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Module Code</label>
-                    <input
-                      type="text"
-                      className="form-input btn-sm"
-                      placeholder="e.g. PROG101"
-                      value={newSubCode}
-                      onChange={(e) => setNewSubCode(e.target.value)}
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label className="form-label">Module Code</label>
+                      <input
+                        type="text"
+                        className="form-input btn-sm"
+                        placeholder="e.g. PROG101"
+                        value={newSubCode}
+                        onChange={(e) => setNewSubCode(e.target.value)}
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label className="form-label">Target Semester</label>
-                    <select 
-                      className="form-input btn-sm"
-                      value={newSubSemester}
-                      onChange={(e) => setNewSubSemester(parseInt(e.target.value, 10))}
-                    >
-                      <option value={1}>Semester 1</option>
-                      <option value={2}>Semester 2</option>
-                      <option value={3}>Semester 3</option>
-                      <option value={4}>Semester 4</option>
-                      <option value={5}>Semester 5</option>
-                      <option value={6}>Semester 6</option>
-                    </select>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                    <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
-                      {editingSubject ? 'Update Subject' : 'Register Subject'}
-                    </button>
-                    {editingSubject && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingSubject(null);
-                          setNewSubName('');
-                          setNewSubCode('');
-                          setNewSubSemester(1);
-                          setCrudError('');
-                        }}
-                        className="btn btn-secondary btn-sm"
+                    <div className="form-group">
+                      <label className="form-label">Target Semester</label>
+                      <select 
+                        className="form-input btn-sm"
+                        value={newSubSemester}
+                        onChange={(e) => setNewSubSemester(parseInt(e.target.value, 10))}
                       >
-                        Cancel
+                        <option value={1}>Semester 1</option>
+                        <option value={2}>Semester 2</option>
+                        <option value={3}>Semester 3</option>
+                        <option value={4}>Semester 4</option>
+                        <option value={5}>Semester 5</option>
+                        <option value={6}>Semester 6</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                      <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
+                        {editingSubject ? 'Update Subject' : 'Register Subject'}
                       </button>
-                    )}
-                  </div>
-                </form>
+                      {editingSubject && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingSubject(null);
+                            setNewSubName('');
+                            setNewSubCode('');
+                            setNewSubSemester(1);
+                            setCrudError('');
+                          }}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
-          </div>
-
+          )}
         </div>
       )}
 
