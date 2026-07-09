@@ -11,7 +11,7 @@ function AppContent() {
   const [authError, setAuthError] = useState('');
   const [shakeCard, setShakeCard] = useState(false);
 
-  const { loading, fetchError, adminPassword } = useAppState();
+  const { loading, fetchError, adminPassword, dialog } = useAppState();
 
   const handleAuthSubmit = (e) => {
     e.preventDefault();
@@ -202,6 +202,58 @@ function AppContent() {
           Supabase Database Synced. Program Cycle Rules: Foundation (2 Semesters) &amp; Degree (6 Semesters).
         </div>
       </footer>
+
+      {/* Custom dialog/confirm alert boxes (Glassmorphic) */}
+      {dialog && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div className="glass-panel" style={{
+            maxWidth: '420px',
+            width: '90%',
+            padding: '2rem 1.5rem',
+            textAlign: 'center',
+            background: 'var(--bg-card)',
+            borderTop: '3px solid var(--primary)',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)'
+          }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.15rem', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+              {dialog.title}
+            </h4>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1.5rem', lineHeight: 1.4 }}>
+              {dialog.message}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.75rem' }}>
+              {dialog.cancelText && (
+                <button
+                  onClick={dialog.onCancel}
+                  className="btn btn-secondary"
+                  style={{ padding: '0.45rem 1.5rem', fontSize: '0.85rem' }}
+                >
+                  {dialog.cancelText}
+                </button>
+              )}
+              <button
+                onClick={dialog.onConfirm}
+                className="btn btn-primary"
+                style={{ padding: '0.45rem 1.5rem', fontSize: '0.85rem' }}
+              >
+                {dialog.confirmText}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

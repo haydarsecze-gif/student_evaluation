@@ -39,8 +39,13 @@ export default function FormPage() {
     setClassId('');
   }, [semester]);
 
-  // Filter classes matching the selected semester
-  const availableClasses = classes.filter(c => parseInt(c.semester, 10) === parseInt(semester, 10));
+  // Filter classes matching the selected semester and program
+  const availableClasses = classes.filter(c => {
+    const isSemMatch = parseInt(c.semester, 10) === parseInt(semester, 10);
+    const subjectObj = subjects.find(s => s.id === c.subjectId);
+    const isProgramMatch = subjectObj ? subjectObj.program === program : false;
+    return isSemMatch && isProgramMatch;
+  });
 
   // Filter semesters based on program selection and active configurations
   const getVisibleSemesters = () => {

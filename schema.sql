@@ -10,12 +10,13 @@ CREATE TABLE lecturers (
   name TEXT NOT NULL UNIQUE
 );
 
--- 2. Create Subjects Table (Module Catalog: Module Code, Module Name, Semester)
+-- 2. Create Subjects Table (Module Catalog: Module Code, Module Name, Semester, Program)
 CREATE TABLE subjects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   code TEXT NOT NULL,
-  semester INTEGER NOT NULL
+  semester INTEGER NOT NULL,
+  program TEXT NOT NULL CHECK (program IN ('foundation', 'degree'))
 );
 
 -- 3. Create Classes Table (Linked directly to a Subject/Module and Lecturer)
@@ -94,14 +95,14 @@ VALUES
   ('d4444444-4444-4444-4444-444444444444', 'Dr. Sarah Jenkins')
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Subjects (Module Catalog)
-INSERT INTO subjects (id, name, code, semester)
+-- Seed Subjects (Module Catalog with program types seeded)
+INSERT INTO subjects (id, name, code, semester, program)
 VALUES
-  ('a1a1a1a1-1111-1111-1111-111111111111', 'Introduction to Programming', 'PROG101', 1),
-  ('a2a2a2a2-2222-2222-2222-222222222222', 'Discrete Mathematics', 'MATH105', 1),
-  ('a3a3a3a3-3333-3333-3333-333333333333', 'Data Structures & Algorithms', 'DSA201', 3),
-  ('b4b4b4b4-4444-4444-4444-444411111111', 'Object-Oriented Programming', 'OOP102', 2),
-  ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 2)
+  ('a1a1a1a1-1111-1111-1111-111111111111', 'Introduction to Programming', 'PROG101', 1, 'degree'),
+  ('a2a2a2a2-2222-2222-2222-222222222222', 'Discrete Mathematics', 'MATH105', 1, 'degree'),
+  ('a3a3a3a3-3333-3333-3333-333333333333', 'Data Structures & Algorithms', 'DSA201', 3, 'degree'),
+  ('b4b4b4b4-4444-4444-4444-444411111111', 'Object-Oriented Programming', 'OOP102', 2, 'degree'),
+  ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 2, 'degree')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Classes (Each class represents a cohort taking a subject, with lecturer assigned)

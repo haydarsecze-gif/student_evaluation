@@ -19,6 +19,45 @@ export const AppStateProvider = ({ children }) => {
     degree: [1, 2, 3, 4, 5, 6]
   });
 
+  // State-driven Custom Dialog Modal Config
+  const [dialog, setDialog] = useState(null); // { message, title, onConfirm, onCancel, confirmText, cancelText }
+
+  // Expose async showConfirm
+  const showConfirm = (message, title = 'Confirm Action') => {
+    return new Promise((resolve) => {
+      setDialog({
+        message,
+        title,
+        onConfirm: () => {
+          setDialog(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialog(null);
+          resolve(false);
+        },
+        confirmText: 'Yes',
+        cancelText: 'No'
+      });
+    });
+  };
+
+  // Expose async showAlert
+  const showAlert = (message, title = 'Notification') => {
+    return new Promise((resolve) => {
+      setDialog({
+        message,
+        title,
+        onConfirm: () => {
+          setDialog(null);
+          resolve(true);
+        },
+        confirmText: 'OK',
+        cancelText: null
+      });
+    });
+  };
+
   // Fetch all tables from Supabase on mount
   const fetchAllData = async () => {
     try {
@@ -130,7 +169,7 @@ export const AppStateProvider = ({ children }) => {
       setFormActive(val);
     } catch (err) {
       console.error("Error toggling portal status:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -145,7 +184,7 @@ export const AppStateProvider = ({ children }) => {
       setAdminPassword(newPwd);
     } catch (err) {
       console.error("Error updating admin password:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -164,7 +203,7 @@ export const AppStateProvider = ({ children }) => {
       return newL;
     } catch (err) {
       console.error("Error adding lecturer:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
       return null;
     }
   };
@@ -179,7 +218,7 @@ export const AppStateProvider = ({ children }) => {
       setLecturers(prev => prev.map(l => l.id === updatedL.id ? updatedL : l).sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err) {
       console.error("Error updating lecturer:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -192,7 +231,7 @@ export const AppStateProvider = ({ children }) => {
       setClasses(prev => prev.filter(c => c.lecturerId !== id));
     } catch (err) {
       console.error("Error deleting lecturer:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -236,7 +275,7 @@ export const AppStateProvider = ({ children }) => {
       setClasses(prev => [...prev, ...localCls]);
     } catch (err) {
       console.error("Error creating class:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -256,7 +295,7 @@ export const AppStateProvider = ({ children }) => {
       setClasses(prev => prev.map(item => item.id === cls.id ? cls : item));
     } catch (err) {
       console.error("Error updating class:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -268,7 +307,7 @@ export const AppStateProvider = ({ children }) => {
       setSubmissions(prev => prev.filter(subm => subm.classId !== id));
     } catch (err) {
       console.error("Error deleting class:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -280,7 +319,7 @@ export const AppStateProvider = ({ children }) => {
       setSubjects(prev => [...prev, ...data]);
     } catch (err) {
       console.error("Error creating subject:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -291,7 +330,7 @@ export const AppStateProvider = ({ children }) => {
       setSubjects(prev => prev.map(sub => sub.id === updatedSub.id ? updatedSub : sub));
     } catch (err) {
       console.error("Error updating subject:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -305,7 +344,7 @@ export const AppStateProvider = ({ children }) => {
       setClasses(prev => prev.filter(cls => cls.subjectId !== id));
     } catch (err) {
       console.error("Error deleting subject:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -317,7 +356,7 @@ export const AppStateProvider = ({ children }) => {
       setCustomQuestions(prev => [...prev, ...data]);
     } catch (err) {
       console.error("Error creating form question:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -328,7 +367,7 @@ export const AppStateProvider = ({ children }) => {
       setCustomQuestions(prev => prev.map(q => q.id === updatedQ.id ? updatedQ : q));
     } catch (err) {
       console.error("Error updating question:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -339,7 +378,7 @@ export const AppStateProvider = ({ children }) => {
       setCustomQuestions(prev => prev.filter(q => q.id !== id));
     } catch (err) {
       console.error("Error deleting question:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -364,7 +403,7 @@ export const AppStateProvider = ({ children }) => {
       }));
     } catch (err) {
       console.error("Error updating active semesters:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -405,7 +444,7 @@ export const AppStateProvider = ({ children }) => {
       setSubmissions(prev => [localS, ...prev]);
     } catch (err) {
       console.error("Error registering student performance:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -416,7 +455,7 @@ export const AppStateProvider = ({ children }) => {
       setSubmissions(prev => prev.filter(subm => subm.id !== id));
     } catch (err) {
       console.error("Error deleting student record:", err);
-      alert("Database error: " + err.message);
+      showAlert("Database error: " + err.message);
     }
   };
 
@@ -459,7 +498,12 @@ export const AppStateProvider = ({ children }) => {
       deleteQuestion,
       
       activeSemesters,
-      toggleSemesterActive
+      toggleSemesterActive,
+
+      // Custom dialog system
+      dialog,
+      showAlert,
+      showConfirm
     }}>
       {children}
     </AppStateContext.Provider>

@@ -32,7 +32,11 @@ export default function AdminDashboard() {
     activeSemesters,
     toggleSemesterActive,
     adminPassword,
-    updateAdminPassword
+    updateAdminPassword,
+
+    // Dialog context
+    showAlert,
+    showConfirm
   } = useAppState();
 
   // Tab controller for Admin Console
@@ -60,6 +64,7 @@ export default function AdminDashboard() {
   const [newSubName, setNewSubName] = useState('');
   const [newSubCode, setNewSubCode] = useState('');
   const [newSubSemester, setNewSubSemester] = useState(1);
+  const [newSubProgram, setNewSubProgram] = useState('degree'); // 'degree' | 'foundation'
 
   // Form states for Lecturers
   const [editingLecturer, setEditingLecturer] = useState(null);
@@ -100,7 +105,7 @@ export default function AdminDashboard() {
   // Excel exporter with custom question columns
   const handleExportExcel = () => {
     if (classes.length === 0) {
-      alert("No classes configured. Please create classes first.");
+      showAlert("No classes configured. Please create classes first.", "Export Error");
       return;
     }
 
@@ -250,7 +255,8 @@ export default function AdminDashboard() {
     const subjectData = {
       name: newSubName.trim(),
       code: newSubCode.trim().toUpperCase(),
-      semester: parseInt(newSubSemester, 10)
+      semester: parseInt(newSubSemester, 10),
+      program: newSubProgram
     };
 
     if (editingSubject) {
@@ -266,6 +272,7 @@ export default function AdminDashboard() {
     setNewSubName('');
     setNewSubCode('');
     setNewSubSemester(1);
+    setNewSubProgram('degree');
     setCrudError('');
   };
 
@@ -274,6 +281,7 @@ export default function AdminDashboard() {
     setNewSubName(sub.name);
     setNewSubCode(sub.code);
     setNewSubSemester(sub.semester || 1);
+    setNewSubProgram(sub.program || 'degree');
     setCrudError('');
   };
 
@@ -577,8 +585,8 @@ export default function AdminDashboard() {
                             </td>
                             <td style={{ textAlign: 'center' }}>
                               <button
-                                onClick={() => {
-                                  if (confirm(`Are you sure you want to delete ${s.name}'s evaluation record?`)) {
+                                onClick={async () => {
+                                  if (await showConfirm(`Are you sure you want to delete ${s.name}'s evaluation record?`)) {
                                     deleteSubmission(s.id);
                                   }
                                 }}
@@ -736,7 +744,14 @@ export default function AdminDashboard() {
                             <td style={{ color: 'var(--primary)', fontWeight: 500 }}>
                               {lecturerObj ? lecturerObj.name : 'Unknown Lecturer'}
                             </td>
-                            <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
+                            <td style={{ fontSize: '0.85rem' }}>
+                              Year {cls.year || 1} &bull; Sem {cls.semester || 1} 
+                              {subjectObj && (
+                                <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.35rem' }}>
+                                  ({subjectObj.program})
+                                </span>
+                              )}
+                            </td>
                             <td style={{ textAlign: 'center' }}>
                               <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                                 <button
@@ -748,8 +763,8 @@ export default function AdminDashboard() {
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions belonging to this class section. Proceed?`)) {
+                                  onClick={async () => {
+                                    if (await showConfirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions belonging to this class section. Proceed?`)) {
                                       deleteClass(cls.id);
                                     }
                                   }}
@@ -793,11 +808,11 @@ export default function AdminDashboard() {
                           <option value="">-- Choose Module --</option>
                           {subjects.map(s => (
                             <option key={s.id} value={s.id}>
-                              {s.name} ({s.code}) [Sem {s.semester}]
+                              {s.name} ({s.code}) [Sem {s.semester} - {s.program === 'foundation' ? 'Foundation' : 'Degree'}]
                             </option>
                           ))}
                         </select>
-                        <span className="form-input-hint">Selecting a module auto-populates Year and Semester.</span>
+                        <span className="form-input-hint">Selecting a module auto-populates Program, Year and Semester.</span>
                       </div>
 
                       <div className="form-group">
@@ -883,6 +898,7 @@ export default function AdminDashboard() {
                         <th>Module Code</th>
                         <th>Subject Name</th>
                         <th>Semester Cycle</th>
+                        <th>Program</th>
                         <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
                       </tr>
                     </thead>
@@ -896,6 +912,11 @@ export default function AdminDashboard() {
                               Semester {sub.semester}
                             </span>
                           </td>
+                          <td>
+                            <span className="badge badge-secondary" style={{ textTransform: 'capitalize' }}>
+                              {sub.program || 'degree'}
+                            </span>
+                          </td>
                           <td style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                               <button
@@ -907,8 +928,8 @@ export default function AdminDashboard() {
                                 Edit
                               </button>
                               <button
-                                onClick={() => {
-                                  if (confirm(`Deleting subject "${sub.name}" will automatically cascade and delete all classes and submissions associated with it. Proceed?`)) {
+                                onClick={async () => {
+                                  if (await showConfirm(`Deleting subject "${sub.name}" will automatically cascade and delete all classes and submissions associated with it. Proceed?`)) {
                                     deleteSubject(sub.id);
                                   }
                                 }}
@@ -961,6 +982,18 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="form-group">
+                      <label className="form-label">Program Type</label>
+                      <select 
+                        className="form-input btn-sm"
+                        value={newSubProgram}
+                        onChange={(e) => setNewSubProgram(e.target.value)}
+                      >
+                        <option value="degree">Degree</option>
+                        <option value="foundation">Foundation</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
                       <label className="form-label">Target Semester</label>
                       <select 
                         className="form-input btn-sm"
@@ -988,6 +1021,7 @@ export default function AdminDashboard() {
                             setNewSubName('');
                             setNewSubCode('');
                             setNewSubSemester(1);
+                            setNewSubProgram('degree');
                             setCrudError('');
                           }}
                           className="btn btn-secondary btn-sm"
@@ -1042,8 +1076,8 @@ export default function AdminDashboard() {
                                   Edit
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    if (confirm(`Deleting lecturer "${l.name}" will automatically delete any classes they are teaching. Proceed?`)) {
+                                  onClick={async () => {
+                                    if (await showConfirm(`Deleting lecturer "${l.name}" will automatically delete any classes they are teaching. Proceed?`)) {
                                       deleteLecturer(l.id);
                                     }
                                   }}
@@ -1239,8 +1273,8 @@ export default function AdminDashboard() {
                         Edit
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Delete the custom question "${q.label}"?`)) {
+                        onClick={async () => {
+                          if (await showConfirm(`Delete the custom question "${q.label}"?`)) {
                             deleteQuestion(q.id);
                           }
                         }}
