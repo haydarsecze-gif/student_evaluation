@@ -8,6 +8,7 @@ export const AppStateProvider = ({ children }) => {
   const [fetchError, setFetchError] = useState(null);
 
   const [formActive, setFormActive] = useState(true);
+  const [adminPassword, setAdminPassword] = useState('admin123'); // Default password
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -79,6 +80,14 @@ export const AppStateProvider = ({ children }) => {
         setFormActive(formActiveRow.value);
       }
 
+      const passwordRow = resSettings.data?.find(s => s.key === 'adminPassword');
+      if (passwordRow) {
+        setAdminPassword(passwordRow.value);
+      } else {
+        // Seed default password in db if missing
+        await supabase.from('settings').insert([{ key: 'adminPassword', value: 'admin123' }]);
+      }
+
       // Map submissions to local structure
       const mappedSubmissions = (resSubmissions.data || []).map(s => ({
         id: s.id,
@@ -108,7 +117,7 @@ export const AppStateProvider = ({ children }) => {
     fetchAllData();
   }, []);
 
-  // Update Settings
+  // Update Settings (Form Active Status)
   const toggleFormActive = async (val) => {
     try {
       const { error } = await supabase
@@ -119,7 +128,22 @@ export const AppStateProvider = ({ children }) => {
       setFormActive(val);
     } catch (err) {
       console.error("Error toggling portal status:", err);
-      alert("Database error toggling form status: " + err.message);
+      alert("Database error: " + err.message);
+    }
+  };
+
+  // Update Settings (Admin Password)
+  const updateAdminPassword = async (newPwd) => {
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .update({ value: newPwd })
+        .eq('key', 'adminPassword');
+      if (error) throw error;
+      setAdminPassword(newPwd);
+    } catch (err) {
+      console.error("Error updating admin password:", err);
+      alert("Database error: " + err.message);
     }
   };
 
@@ -328,7 +352,7 @@ export const AppStateProvider = ({ children }) => {
       setSubmissions(prev => [localS, ...prev]);
     } catch (err) {
       console.error("Error registering student performance:", err);
-      alert("Database error registering submission: " + err.message);
+      alert("Database error: " + err.message);
     }
   };
 
@@ -374,6 +398,8 @@ export const AppStateProvider = ({ children }) => {
       fetchError,
       formActive,
       setFormActive: toggleFormActive,
+      adminPassword,
+      updateAdminPassword,
       classes,
       addClass,
       updateClass,

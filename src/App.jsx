@@ -3,11 +3,40 @@ import { AppStateProvider, useAppState } from './context/AppStateContext';
 import Navbar from './components/Navbar';
 import FormPage from './components/FormPage';
 import AdminDashboard from './components/AdminDashboard';
-import { Loader2, ServerCrash } from 'lucide-react';
+import { Loader2, ServerCrash, Lock, ShieldAlert, KeyRound } from 'lucide-react';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'admin'
-  const { loading, fetchError } = useAppState();
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [shakeCard, setShakeCard] = useState(false);
+
+  const { loading, fetchError, adminPassword } = useAppState();
+
+  const handleAuthSubmit = (e) => {
+    e.preventDefault();
+    if (passwordInput === adminPassword) {
+      setIsAdminAuthenticated(true);
+      setAuthError('');
+      setPasswordInput('');
+    } else {
+      setAuthError('Incorrect access key. Please try again.');
+      setShakeCard(true);
+      setPasswordInput('');
+      setTimeout(() => setShakeCard(false), 500);
+    }
+  };
+
+  const handleTabChange = (tab) => {
+    if (tab === 'form') {
+      // Automatically lock admin panel when navigating away
+      setIsAdminAuthenticated(false);
+      setAuthError('');
+      setPasswordInput('');
+    }
+    setActiveTab(tab);
+  };
 
   // Premium loading state overlay
   if (loading) {
@@ -108,11 +137,91 @@ function AppContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       {/* Top navigation */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={handleTabChange} />
 
       {/* Main page layout */}
       <main style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'form' ? <FormPage /> : <AdminDashboard />}
+        {activeTab === 'form' ? (
+          <FormPage />
+        ) : isAdminAuthenticated ? (
+          <AdminDashboard />
+        ) : (
+          /* Glassmorphic Password Entry Screen */
+          <div className="animate-fade-in" style={{ maxWidth: '420px', margin: '6rem auto', width: '100%', padding: '0 1rem' }}>
+            <div 
+              className={`glass-panel ${shakeCard ? 'animate-shake' : ''}`} 
+              style={{ 
+                padding: '2.5rem 2rem', 
+                textAlign: 'center',
+                borderTop: '2px solid var(--primary)',
+                animation: shakeCard ? 'shake 0.4s' : ''
+              }}
+            >
+              <style>{`
+                @keyframes shake {
+                  0%, 100% { transform: translateX(0); }
+                  20%, 60% { transform: translateX(-8px); }
+                  40%, 80% { transform: translateX(8px); }
+                }
+              `}</style>
+              
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'var(--primary-glow)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--primary)',
+                marginBottom: '1.25rem',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                boxShadow: 'var(--shadow-glow)'
+              }}>
+                <Lock size={26} />
+              </div>
+              
+              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.25rem', marginBottom: '0.5rem' }}>
+                Console Access Restrained
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.75rem' }}>
+                Enter the administrative credentials key to unlock records.
+              </p>
+
+              <form onSubmit={handleAuthSubmit}>
+                <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      type="password"
+                      className={`form-input ${authError ? 'error' : ''}`}
+                      placeholder="Enter Password (default: admin123)"
+                      value={passwordInput}
+                      onChange={(e) => setPasswordInput(e.target.value)}
+                      style={{ paddingLeft: '2.25rem' }}
+                      autoFocus
+                    />
+                    <KeyRound size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  </div>
+                  {authError && <span className="form-input-error-msg" style={{ justifyContent: 'center' }}>{authError}</span>}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.7rem' }}>
+                    Unlock Dashboard
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => handleTabChange('form')} 
+                    className="btn btn-secondary" 
+                    style={{ width: '100%', padding: '0.7rem' }}
+                  >
+                    Cancel / Go Back
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Footer */}

@@ -76,13 +76,13 @@ export default function FormPage() {
       .filter(sem => activeList.includes(sem));
   };
 
-  // Grade helper
+  // Sentiment helper
   const getGrade = (numScore) => {
-    if (numScore >= 85) return { letter: 'A', class: 'badge-success' };
-    if (numScore >= 70) return { letter: 'B', class: 'badge-info' };
-    if (numScore >= 55) return { letter: 'C', class: 'badge-warning' };
-    if (numScore >= 40) return { letter: 'D', class: 'badge-warning' };
-    return { letter: 'F', class: 'badge-danger' };
+    if (numScore >= 85) return { letter: 'Love', class: 'badge-success' };
+    if (numScore >= 70) return { letter: 'Like', class: 'badge-info' };
+    if (numScore >= 55) return { letter: 'Normal', class: 'badge-warning' };
+    if (numScore >= 40) return { letter: 'Not Like', class: 'badge-warning' };
+    return { letter: 'Hate', class: 'badge-danger' };
   };
 
   // Handle custom question answer updates

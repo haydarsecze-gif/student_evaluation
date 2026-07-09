@@ -31,7 +31,9 @@ export default function AdminDashboard() {
     updateQuestion,
     deleteQuestion,
     activeSemesters,
-    toggleSemesterActive
+    toggleSemesterActive,
+    adminPassword,
+    updateAdminPassword
   } = useAppState();
 
   // Tab controller for Admin Console
@@ -72,14 +74,27 @@ export default function AdminDashboard() {
 
   // Error messaging
   const [crudError, setCrudError] = useState('');
+  
+  // Password change states
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
 
-  // Grade helper
+  const handlePasswordChangeSubmit = async (e) => {
+    e.preventDefault();
+    if (!newPassword.trim()) return;
+    await updateAdminPassword(newPassword.trim());
+    setPasswordChangeSuccess(true);
+    setNewPassword('');
+    setTimeout(() => setPasswordChangeSuccess(false), 3000);
+  };
+
+  // Sentiment rating helper
   const getGrade = (numScore) => {
-    if (numScore >= 85) return { letter: 'A', class: 'badge-success' };
-    if (numScore >= 70) return { letter: 'B', class: 'badge-info' };
-    if (numScore >= 55) return { letter: 'C', class: 'badge-warning' };
-    if (numScore >= 40) return { letter: 'D', class: 'badge-warning' };
-    return { letter: 'F', class: 'badge-danger' };
+    if (numScore >= 85) return { letter: 'Love', class: 'badge-success' };
+    if (numScore >= 70) return { letter: 'Like', class: 'badge-info' };
+    if (numScore >= 55) return { letter: 'Normal', class: 'badge-warning' };
+    if (numScore >= 40) return { letter: 'Not Like', class: 'badge-warning' };
+    return { letter: 'Hate', class: 'badge-danger' };
   };
 
   // Excel exporter with custom question columns
@@ -1135,6 +1150,39 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Console Security Settings */}
+            <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Settings size={18} color="var(--primary)" />
+                Console Security Settings
+              </h3>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+                Change the access credentials key required to unlock this Administrative Console.
+              </p>
+
+              {passwordChangeSuccess && (
+                <div style={{ color: 'var(--success)', fontSize: '0.8rem', marginBottom: '1rem', background: 'var(--success-glow)', padding: '0.5rem', borderRadius: '4px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
+                  Password updated successfully in database!
+                </div>
+              )}
+
+              <form onSubmit={handlePasswordChangeSubmit} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end' }}>
+                <div className="form-group" style={{ marginBottom: 0, flexGrow: 1 }}>
+                  <label className="form-label">New Access Password</label>
+                  <input
+                    type="password"
+                    placeholder="Enter new admin password"
+                    className="form-input btn-sm"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary btn-sm">
+                  Save Changes
+                </button>
+              </form>
             </div>
 
             {/* Custom Google Forms-Style Questionnaire List */}
