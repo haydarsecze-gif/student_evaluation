@@ -17,11 +17,6 @@ export default function AdminDashboard() {
     submissions,
     deleteSubmission,
     
-    // Lecturer Assignments context
-    lecturerAssignments,
-    addLecturerAssignment,
-    deleteLecturerAssignment,
-    
     customQuestions,
     addQuestion,
     updateQuestion,
@@ -48,20 +43,16 @@ export default function AdminDashboard() {
 
   // Forms states for Classes
   const [editingClass, setEditingClass] = useState(null);
+  const [classSubjectId, setClassSubjectId] = useState('');
   const [newClassName, setNewClassName] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
-  const [newClassYear, setNewClassYear] = useState(1);
-  const [newClassSemester, setNewClassSemester] = useState(1);
+  const [newClassLecturer, setNewClassLecturer] = useState('');
 
-  // Form states for Subjects
+  // Form states for Subjects (Modules)
   const [editingSubject, setEditingSubject] = useState(null);
   const [newSubName, setNewSubName] = useState('');
   const [newSubCode, setNewSubCode] = useState('');
   const [newSubSemester, setNewSubSemester] = useState(1);
-
-  // Lecturer Assignment interface states
-  const [activeAssignmentClassId, setActiveAssignmentClassId] = useState(null);
-  const [assigningLecturerBySubject, setAssigningLecturerBySubject] = useState({});
 
   // Custom Question Form state
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -170,19 +161,39 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, `Student_Evaluation_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
+  // Extract unique lecturer names from current classes for the datalist dropdown
+  const existingLecturers = Array.from(new Set(classes.map(c => c.lecturerName).filter(Boolean)));
+
   // Add or Edit Class
   const handleClassSubmit = (e) => {
     e.preventDefault();
-    if (!newClassName.trim() || !newClassCode.trim()) {
-      setCrudError('Class name and code are required.');
+    if (!classSubjectId) {
+      setCrudError('Please select a Module/Subject first.');
       return;
     }
+    if (!newClassCode.trim() || !newClassName.trim() || !newClassLecturer.trim()) {
+      setCrudError('Class Code, Section Name, and Lecturer Name are required.');
+      return;
+    }
+
+    // Load matching subject to inherit semester
+    const subjectObj = subjects.find(s => s.id === classSubjectId);
+    if (!subjectObj) {
+      setCrudError('Invalid subject/module selection.');
+      return;
+    }
+
+    // Auto-derive year based on semester
+    const targetSemester = parseInt(subjectObj.semester, 10);
+    const targetYear = targetSemester <= 2 ? 1 : targetSemester <= 4 ? 2 : 3;
 
     const classData = {
       name: newClassName.trim(),
       code: newClassCode.trim().toUpperCase(),
-      year: parseInt(newClassYear, 10),
-      semester: parseInt(newClassSemester, 10)
+      subjectId: classSubjectId,
+      lecturerName: newClassLecturer.trim(),
+      year: targetYear,
+      semester: targetSemester
     };
 
     if (editingClass) {
@@ -195,24 +206,24 @@ export default function AdminDashboard() {
       addClass(classData);
     }
 
+    // Reset Class Inputs
+    setClassSubjectId('');
     setNewClassName('');
     setNewClassCode('');
-    setNewClassYear(1);
-    setNewClassSemester(1);
+    setNewClassLecturer('');
     setCrudError('');
   };
 
   const startEditClass = (cls) => {
     setEditingClass(cls);
+    setClassSubjectId(cls.subjectId);
     setNewClassName(cls.name);
     setNewClassCode(cls.code);
-    setNewClassYear(cls.year || 1);
-    setNewClassSemester(cls.semester || 1);
-    setActiveAssignmentClassId(null); // Close assignment manager when editing
+    setNewClassLecturer(cls.lecturerName);
     setCrudError('');
   };
 
-  // Add or Edit Subject
+  // Add or Edit Subject (Module)
   const handleSubjectSubmit = (e) => {
     e.preventDefault();
     if (!newSubName.trim() || !newSubCode.trim()) {
@@ -331,118 +342,6 @@ export default function AdminDashboard() {
   };
 
   const { classMetrics, semesterMetrics } = getSubmissionsMetrics();
-
-  // Unified Lecturer Assignments Manager for selected class
-  const renderAssignmentsManager = (cls) => {
-    // Get all subjects belonging to this class's semester
-    const classSubjects = subjects.filter(sub => parseInt(sub.semester, 10) === parseInt(cls.semester, 10));
-
-    return (
-      <div className="glass-panel" style={{ padding: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-            Assignments: {cls.code}
-          </h3>
-          <button 
-            onClick={() => setActiveAssignmentClassId(null)} 
-            className="btn btn-secondary btn-sm"
-            style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
-          >
-            Close
-          </button>
-        </div>
-
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.5rem' }}>
-          This class is in <strong>Year {cls.year}, Semester {cls.semester}</strong>. Below are the subjects matching this semester. Assign teaching lecturers:
-        </p>
-
-        {classSubjects.length === 0 ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(0,0,0,0.02)', borderRadius: '8px' }}>
-            No subjects configured for Semester {cls.semester} yet. Create subjects under the "Subjects" section first.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {classSubjects.map(sub => {
-              const subLa = lecturerAssignments.filter(la => la.classId === cls.id && la.subjectId === sub.id);
-              const inputVal = assigningLecturerBySubject[sub.id] || '';
-
-              return (
-                <div key={sub.id} className="glass-panel" style={{ padding: '1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                    <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', marginLeft: '0.5rem', fontFamily: 'var(--font-mono)' }}>{sub.code}</span>
-                    </div>
-                  </div>
-
-                  {/* Current assigned lecturers for this subject */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
-                    {subLa.length === 0 ? (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No lecturers assigned yet</span>
-                    ) : (
-                      subLa.map(la => (
-                        <div key={la.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--primary)' }}>
-                          <span>{la.lecturerName}</span>
-                          <button 
-                            onClick={() => deleteLecturerAssignment(la.id)}
-                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: 0, fontWeight: 'bold' }}
-                            title="Remove Lecturer"
-                          >
-                            &times;
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  {/* Quick assign input */}
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input 
-                      type="text" 
-                      placeholder="Lecturer Name"
-                      className="form-input btn-sm"
-                      style={{ fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}
-                      value={inputVal}
-                      onChange={(e) => setAssigningLecturerBySubject(prev => ({ ...prev, [sub.id]: e.target.value }))}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          if (!inputVal.trim()) return;
-                          addLecturerAssignment({
-                            lecturerName: inputVal.trim(),
-                            classId: cls.id,
-                            semester: cls.semester,
-                            subjectId: sub.id
-                          });
-                          setAssigningLecturerBySubject(prev => ({ ...prev, [sub.id]: '' }));
-                        }
-                      }}
-                    />
-                    <button 
-                      onClick={() => {
-                        if (!inputVal.trim()) return;
-                        addLecturerAssignment({
-                          lecturerName: inputVal.trim(),
-                          classId: cls.id,
-                          semester: cls.semester,
-                          subjectId: sub.id
-                        });
-                        setAssigningLecturerBySubject(prev => ({ ...prev, [sub.id]: '' }));
-                      }}
-                      className="btn btn-primary btn-sm"
-                      style={{ padding: '0.4rem 0.75rem', fontSize: '0.75rem' }}
-                    >
-                      Assign
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
 
   return (
     <div className="app-container animate-fade-in" style={{ padding: '1.5rem' }}>
@@ -724,7 +623,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB CONTENT: UNIFIED CLASSES & LECTURERS & SUBJECTS */}
+      {/* TAB CONTENT: UNIFIED CLASSES & SUBJECTS */}
       {adminTab === 'classes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
@@ -759,170 +658,158 @@ export default function AdminDashboard() {
                       <tr>
                         <th>Class Code</th>
                         <th>Class Name</th>
-                        <th>Year / Semester</th>
-                        <th>Subjects &amp; Lecturers</th>
-                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
+                        <th>Subject (Module)</th>
+                        <th>Lecturer</th>
+                        <th>Term / Cycle</th>
+                        <th style={{ textAlign: 'center', width: '130px' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {classes.map(cls => (
-                        <tr key={cls.id}>
-                          <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
-                          <td>{cls.name}</td>
-                          <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
-                          <td>
-                            {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).map(s => {
-                              const la = lecturerAssignments.filter(la => la.classId === cls.id && la.subjectId === s.id);
-                              return (
-                                <div key={s.id} style={{ fontSize: '0.75rem', marginBottom: '0.2rem' }}>
-                                  <strong style={{ color: 'var(--text-secondary)' }}>{s.code}:</strong>{' '}
-                                  {la.length > 0 ? (
-                                    <span style={{ color: 'var(--primary)', fontWeight: 500 }}>
-                                      {la.map(item => item.lecturerName).join(', ')}
-                                    </span>
-                                  ) : (
-                                    <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned</span>
-                                  )}
+                      {classes.map(cls => {
+                        const subjectObj = subjects.find(s => s.id === cls.subjectId);
+                        return (
+                          <tr key={cls.id}>
+                            <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
+                            <td>{cls.name}</td>
+                            <td>
+                              {subjectObj ? (
+                                <div style={{ fontSize: '0.85rem' }}>
+                                  <span>{subjectObj.name}</span>
+                                  <span style={{ color: 'var(--text-secondary)', marginLeft: '0.35rem', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>({subjectObj.code})</span>
                                 </div>
-                              );
-                            })}
-                            {subjects.filter(s => parseInt(s.semester, 10) === parseInt(cls.semester, 10)).length === 0 && (
-                              <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No subjects in Sem {cls.semester}</span>
-                            )}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
-                              <button
-                                onClick={() => {
-                                  setEditingClass(null);
-                                  setActiveAssignmentClassId(cls.id);
-                                }}
-                                className={`btn btn-secondary btn-sm ${activeAssignmentClassId === cls.id ? 'btn-primary' : ''}`}
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                title="Assign Lecturers"
-                              >
-                                Assign
-                              </button>
-                              <button
-                                onClick={() => startEditClass(cls)}
-                                className="btn btn-secondary btn-sm"
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                title="Edit Class"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions & assignments belonging to this class. Proceed?`)) {
-                                    deleteClass(cls.id);
-                                  }
-                                }}
-                                className="btn btn-secondary btn-sm btn-danger"
-                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                title="Delete Class"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned Module</span>
+                              )}
+                            </td>
+                            <td style={{ color: 'var(--primary)', fontWeight: 500 }}>{cls.lecturerName}</td>
+                            <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                                <button
+                                  onClick={() => startEditClass(cls)}
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  title="Edit Class"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions belonging to this class section. Proceed?`)) {
+                                      deleteClass(cls.id);
+                                    }
+                                  }}
+                                  className="btn btn-secondary btn-sm btn-danger"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  title="Delete Class"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {activeAssignmentClassId ? (
-                    renderAssignmentsManager(classes.find(c => c.id === activeAssignmentClassId))
-                  ) : (
-                    /* Create or Edit Class Card */
-                    <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
-                        {editingClass ? 'Edit Class Configuration' : 'Create Class Configuration'}
-                      </h3>
+                  {/* Create or Edit Class Card */}
+                  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                      {editingClass ? 'Edit Class Configuration' : 'Create Class Configuration'}
+                    </h3>
 
-                      {crudError && (
-                        <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
-                          {crudError}
-                        </div>
-                      )}
+                    {crudError && (
+                      <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                        {crudError}
+                      </div>
+                    )}
 
-                      <form onSubmit={handleClassSubmit}>
-                        <div className="form-group">
-                          <label className="form-label">Class Section Name</label>
-                          <input
-                            type="text"
-                            className="form-input btn-sm"
-                            placeholder="e.g. Computer Science A"
-                            value={newClassName}
-                            onChange={(e) => setNewClassName(e.target.value)}
-                          />
-                        </div>
+                    <form onSubmit={handleClassSubmit}>
+                      {/* Module Dropdown Selector */}
+                      <div className="form-group">
+                        <label className="form-label">Select Module / Subject</label>
+                        <select
+                          className="form-input btn-sm"
+                          value={classSubjectId}
+                          onChange={(e) => setClassSubjectId(e.target.value)}
+                        >
+                          <option value="">-- Choose Module --</option>
+                          {subjects.map(s => (
+                            <option key={s.id} value={s.id}>
+                              {s.name} ({s.code}) [Sem {s.semester}]
+                            </option>
+                          ))}
+                        </select>
+                        <span className="form-input-hint">Selecting a module auto-populates Year and Semester.</span>
+                      </div>
 
-                        <div className="form-group">
-                          <label className="form-label">Class Code</label>
-                          <input
-                            type="text"
-                            className="form-input btn-sm"
-                            placeholder="e.g. CS1A"
-                            value={newClassCode}
-                            onChange={(e) => setNewClassCode(e.target.value)}
-                          />
-                        </div>
+                      <div className="form-group">
+                        <label className="form-label">Class Code (e.g. S2A, S2B)</label>
+                        <input
+                          type="text"
+                          className="form-input btn-sm"
+                          placeholder="e.g. S2A"
+                          value={newClassCode}
+                          onChange={(e) => setNewClassCode(e.target.value)}
+                        />
+                      </div>
 
-                        <div className="form-group">
-                          <label className="form-label">Year</label>
-                          <select 
-                            className="form-input btn-sm"
-                            value={newClassYear}
-                            onChange={(e) => setNewClassYear(parseInt(e.target.value, 10))}
+                      <div className="form-group">
+                        <label className="form-label">Class Section Name</label>
+                        <input
+                          type="text"
+                          className="form-input btn-sm"
+                          placeholder="e.g. Computer Application Section A"
+                          value={newClassName}
+                          onChange={(e) => setNewClassName(e.target.value)}
+                        />
+                      </div>
+
+                      {/* Autocomplete Lecturer input box utilizing browser native datalist */}
+                      <div className="form-group">
+                        <label className="form-label">Assigned Lecturer</label>
+                        <input
+                          type="text"
+                          list="lecturer-suggestions"
+                          className="form-input btn-sm"
+                          placeholder="Type or select existing lecturer..."
+                          value={newClassLecturer}
+                          onChange={(e) => setNewClassLecturer(e.target.value)}
+                        />
+                        <datalist id="lecturer-suggestions">
+                          {existingLecturers.map(name => (
+                            <option key={name} value={name} />
+                          ))}
+                        </datalist>
+                        <span className="form-input-hint">Autocomplete loads previous lecturers, or you can enter a new one.</span>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                        <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
+                          {editingClass ? 'Update Class' : 'Create Class'}
+                        </button>
+                        {editingClass && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingClass(null);
+                              setClassSubjectId('');
+                              setNewClassName('');
+                              setNewClassCode('');
+                              setNewClassLecturer('');
+                              setCrudError('');
+                            }}
+                            className="btn btn-secondary btn-sm"
                           >
-                            <option value={1}>Year 1</option>
-                            <option value={2}>Year 2</option>
-                            <option value={3}>Year 3</option>
-                          </select>
-                        </div>
-
-                        <div className="form-group">
-                          <label className="form-label">Semester</label>
-                          <select 
-                            className="form-input btn-sm"
-                            value={newClassSemester}
-                            onChange={(e) => setNewClassSemester(parseInt(e.target.value, 10))}
-                          >
-                            <option value={1}>Semester 1</option>
-                            <option value={2}>Semester 2</option>
-                            <option value={3}>Semester 3</option>
-                            <option value={4}>Semester 4</option>
-                            <option value={5}>Semester 5</option>
-                            <option value={6}>Semester 6</option>
-                          </select>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-                          <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
-                            {editingClass ? 'Update Class' : 'Create Class'}
+                            Cancel
                           </button>
-                          {editingClass && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingClass(null);
-                                setNewClassName('');
-                                setNewClassCode('');
-                                setNewClassYear(1);
-                                setNewClassSemester(1);
-                                setCrudError('');
-                              }}
-                              className="btn btn-secondary btn-sm"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </div>
-                      </form>
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -967,7 +854,7 @@ export default function AdminDashboard() {
                               </button>
                               <button
                                 onClick={() => {
-                                  if (confirm(`Deleting subject "${sub.name}" will automatically cascade and delete all submissions & lecturer assignments associated with it. Proceed?`)) {
+                                  if (confirm(`Deleting subject "${sub.name}" will automatically cascade and delete all classes and submissions associated with it. Proceed?`)) {
                                     deleteSubject(sub.id);
                                   }
                                 }}

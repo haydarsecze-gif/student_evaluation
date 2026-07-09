@@ -5,9 +5,8 @@ export default function FormPage() {
   const { 
     formActive,
     classes,
+    subjects,
     addSubmission,
-    getSubjectsBySemester,
-    getLecturersForConfig,
     customQuestions,
     activeSemesters
   } = useAppState();
@@ -19,9 +18,7 @@ export default function FormPage() {
   const [program, setProgram] = useState(''); // 'foundation' | 'degree'
   const [semester, setSemester] = useState('');
   const [classId, setClassId] = useState('');
-  const [subjectId, setSubjectId] = useState('');
   const [score, setScore] = useState(80);
-  const [lecturer, setLecturer] = useState('');
 
   // Custom Questions Answers State
   const [customAnswers, setCustomAnswers] = useState({});
@@ -30,42 +27,17 @@ export default function FormPage() {
   const [errors, setErrors] = useState({});
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Available Lecturers filtered by Class + Semester + Subject
-  const [availableLecturers, setAvailableLecturers] = useState([]);
-
-  // Filter lecturers when class, semester, or subject changes
-  useEffect(() => {
-    if (classId && semester && subjectId) {
-      const lecturers = getLecturersForConfig(classId, semester, subjectId);
-      setAvailableLecturers(lecturers);
-      // Auto-select if there is exactly 1 lecturer
-      if (lecturers.length === 1) {
-        setLecturer(lecturers[0].lecturerName);
-      } else {
-        setLecturer('');
-      }
-    } else {
-      setAvailableLecturers([]);
-      setLecturer('');
-    }
-  }, [classId, semester, subjectId, getLecturersForConfig]);
-
-  // Reset semester, subject, and class when program changes
+  // Reset semester and class when program changes
   useEffect(() => {
     setSemester('');
-    setSubjectId('');
     setClassId('');
   }, [program]);
 
-  // Reset subject and class when semester changes
+  // Reset class when semester changes
   useEffect(() => {
-    setSubjectId('');
     setClassId('');
   }, [semester]);
 
-  // Get subjects matching the semester
-  const availableSubjects = getSubjectsBySemester(semester);
-  
   // Filter classes matching the selected semester
   const availableClasses = classes.filter(c => parseInt(c.semester, 10) === parseInt(semester, 10));
 
@@ -124,16 +96,7 @@ export default function FormPage() {
 
     if (!program) tempErrors.program = 'Please select a program';
     if (!semester) tempErrors.semester = 'Please select a semester';
-    if (!classId) tempErrors.classId = 'Please select a class';
-    if (!subjectId) tempErrors.subjectId = 'Please select a subject';
-    
-    // Lecturer validation - only required if there are lecturers assigned
-    if (classId && semester && subjectId) {
-      const assigned = getLecturersForConfig(classId, semester, subjectId);
-      if (assigned.length > 0 && !lecturer) {
-        tempErrors.lecturer = 'Please select a lecturer';
-      }
-    }
+    if (!classId) tempErrors.classId = 'Please select your Class / Module section';
 
     // Validate Dynamic Custom Questions
     customQuestions.forEach(q => {
@@ -159,6 +122,10 @@ export default function FormPage() {
     e.preventDefault();
     if (!validate()) return;
 
+    // Find details about the selected class section
+    const selectedClass = classes.find(c => c.id === classId);
+    if (!selectedClass) return;
+
     // Add submission with basic fields + custom answers
     addSubmission({
       name,
@@ -167,9 +134,9 @@ export default function FormPage() {
       program,
       semester: parseInt(semester, 10),
       classId,
-      subjectId,
+      subjectId: selectedClass.subjectId,
       score: parseInt(score, 10),
-      lecturer,
+      lecturer: selectedClass.lecturerName,
       customAnswers
     });
 
@@ -180,9 +147,7 @@ export default function FormPage() {
     setProgram('');
     setSemester('');
     setClassId('');
-    setSubjectId('');
     setScore(80);
-    setLecturer('');
     setCustomAnswers({});
     setErrors({});
 
@@ -330,123 +295,65 @@ export default function FormPage() {
               {errors.program && <span className="form-input-error-msg">{errors.program}</span>}
             </div>
 
-            {/* Semester & Class */}
-            <div className="grid-cols-2">
-              <div className="form-group">
-                <label className="form-label">
-                  Semester <span className="required">*</span>
-                </label>
-                <div className="select-wrapper">
-                  <select
-                    disabled={!program}
-                    className={`form-input ${errors.semester ? 'error' : ''}`}
-                    value={semester}
-                    onChange={(e) => setSemester(e.target.value)}
-                    style={!program ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
-                  >
-                    <option value="">
-                      {!program ? 'Select Program first' : 'Select Semester'}
-                    </option>
-                    {visibleSemesters.map(sem => (
-                      <option key={sem} value={sem}>
-                        Semester {sem}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {errors.semester && <span className="form-input-error-msg">{errors.semester}</span>}
-                {program && visibleSemesters.length === 0 && (
-                  <span className="form-input-error-msg" style={{ color: 'var(--warning)' }}>
-                    No active semesters configured by Admin for this program.
-                  </span>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  Class Name / Section <span className="required">*</span>
-                </label>
-                <div className="select-wrapper">
-                  <select
-                    disabled={!semester}
-                    className={`form-input ${errors.classId ? 'error' : ''}`}
-                    value={classId}
-                    onChange={(e) => setClassId(e.target.value)}
-                    style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
-                  >
-                    <option value="">
-                      {!semester ? 'Select Semester first' : 'Select Class'}
-                    </option>
-                    {availableClasses.map(c => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} ({c.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {errors.classId && <span className="form-input-error-msg">{errors.classId}</span>}
-              </div>
-            </div>
-
-            {/* Subject / Module Select */}
+            {/* Semester Selection */}
             <div className="form-group">
               <label className="form-label">
-                Subject / Module <span className="required">*</span>
+                Semester <span className="required">*</span>
+              </label>
+              <div className="select-wrapper">
+                <select
+                  disabled={!program}
+                  className={`form-input ${errors.semester ? 'error' : ''}`}
+                  value={semester}
+                  onChange={(e) => setSemester(e.target.value)}
+                  style={!program ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
+                >
+                  <option value="">
+                    {!program ? 'Select Program first' : 'Select Semester'}
+                  </option>
+                  {visibleSemesters.map(sem => (
+                    <option key={sem} value={sem}>
+                      Semester {sem}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {errors.semester && <span className="form-input-error-msg">{errors.semester}</span>}
+              {program && visibleSemesters.length === 0 && (
+                <span className="form-input-error-msg" style={{ color: 'var(--warning)' }}>
+                  No active semesters configured by Admin for this program.
+                </span>
+              )}
+            </div>
+
+            {/* Combined Class Section Select */}
+            <div className="form-group">
+              <label className="form-label">
+                Class Code &amp; Module Section <span className="required">*</span>
               </label>
               <div className="select-wrapper">
                 <select
                   disabled={!semester}
-                  className={`form-input ${errors.subjectId ? 'error' : ''}`}
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
+                  className={`form-input ${errors.classId ? 'error' : ''}`}
+                  value={classId}
+                  onChange={(e) => setClassId(e.target.value)}
                   style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                 >
                   <option value="">
-                    {!semester ? 'Select Semester first' : 'Select Subject / Module'}
+                    {!semester ? 'Select Semester first' : 'Select Class / Module Section'}
                   </option>
-                  {availableSubjects.map(s => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.code})
-                    </option>
-                  ))}
+                  {availableClasses.map(c => {
+                    const subjectObj = subjects.find(s => s.id === c.subjectId);
+                    const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
+                    return (
+                      <option key={c.id} value={c.id}>
+                        {subjectDisplay} [Class: {c.code}] - {c.lecturerName}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
-              {errors.subjectId && <span className="form-input-error-msg">{errors.subjectId}</span>}
-            </div>
-
-            {/* Smart Lecturer Dropdown */}
-            <div className="form-group">
-              <label className="form-label">
-                Lecturer <span className="required">*</span>
-              </label>
-              <div className="select-wrapper">
-                <select
-                  disabled={!classId || !semester || !subjectId}
-                  className={`form-input ${errors.lecturer ? 'error' : ''}`}
-                  value={lecturer}
-                  onChange={(e) => setLecturer(e.target.value)}
-                  style={(!classId || !semester || !subjectId) ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
-                >
-                  <option value="">
-                    {(!classId || !semester || !subjectId) 
-                      ? 'Complete Class, Semester, and Subject selections first' 
-                      : availableLecturers.length === 0 
-                        ? 'No Lecturers assigned' 
-                        : 'Select Assigned Lecturer'}
-                  </option>
-                  {availableLecturers.map(la => (
-                    <option key={la.id} value={la.lecturerName}>
-                      {la.lecturerName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {errors.lecturer && <span className="form-input-error-msg">{errors.lecturer}</span>}
-              {classId && semester && subjectId && availableLecturers.length === 0 && (
-                <div style={{ marginTop: '0.25rem', color: '#d97706', fontSize: '0.75rem' }}>
-                  <span>Admin must create a Lecturer Assignment for this configuration.</span>
-                </div>
-              )}
+              {errors.classId && <span className="form-input-error-msg">{errors.classId}</span>}
             </div>
 
             {/* Performance (Slider) */}
