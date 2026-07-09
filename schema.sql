@@ -1,10 +1,16 @@
 -- Recreate database tables for the linked Classes, Subjects, and Lecturers schema
 DROP TABLE IF EXISTS submissions CASCADE;
-DROP TABLE IF EXISTS lecturer_assignments CASCADE;
 DROP TABLE IF EXISTS classes CASCADE;
+DROP TABLE IF EXISTS lecturers CASCADE;
 DROP TABLE IF EXISTS subjects CASCADE;
 
--- 1. Create Subjects Table (Module Catalog: Module Code, Module Name, Semester)
+-- 1. Create Lecturers Table
+CREATE TABLE lecturers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE
+);
+
+-- 2. Create Subjects Table (Module Catalog: Module Code, Module Name, Semester)
 CREATE TABLE subjects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
@@ -12,18 +18,18 @@ CREATE TABLE subjects (
   semester INTEGER NOT NULL
 );
 
--- 2. Create Classes Table (Linked directly to a Subject/Module and Lecturer)
+-- 3. Create Classes Table (Linked directly to a Subject/Module and Lecturer)
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL, -- e.g. "Section A"
   code TEXT NOT NULL, -- e.g. "S2A"
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
-  lecturer_name TEXT NOT NULL,
+  lecturer_id UUID REFERENCES lecturers(id) ON DELETE CASCADE,
   year INTEGER NOT NULL,
   semester INTEGER NOT NULL
 );
 
--- 3. Create Custom Questions Table
+-- 4. Create Custom Questions Table
 CREATE TABLE IF NOT EXISTS custom_questions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   label TEXT NOT NULL,
@@ -33,19 +39,19 @@ CREATE TABLE IF NOT EXISTS custom_questions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Create Active Semesters Table
+-- 5. Create Active Semesters Table
 CREATE TABLE IF NOT EXISTS active_semesters (
   program TEXT PRIMARY KEY CHECK (program IN ('foundation', 'degree')),
   semesters INTEGER[] NOT NULL
 );
 
--- 5. Create Settings Table
+-- 6. Create Settings Table
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL
 );
 
--- 6. Create Submissions Table
+-- 7. Create Submissions Table
 CREATE TABLE submissions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
@@ -56,7 +62,7 @@ CREATE TABLE submissions (
   class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
   score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
-  lecturer TEXT NOT NULL,
+  lecturer TEXT NOT NULL, -- Keep lecturer as text for historical submission logs
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   custom_answers JSONB NOT NULL DEFAULT '{}'::jsonb
 );
@@ -79,6 +85,15 @@ VALUES
   ('degree', ARRAY[1, 2, 3, 4, 5, 6])
 ON CONFLICT (program) DO NOTHING;
 
+-- Seed Lecturers
+INSERT INTO lecturers (id, name)
+VALUES
+  ('d1111111-1111-1111-1111-111111111111', 'Dr. Evelyn Martinez'),
+  ('d2222222-2222-2222-2222-222222222222', 'Prof. Alan Turing'),
+  ('d3333333-3333-3333-3333-333333333333', 'Prof. Marcus Vance'),
+  ('d4444444-4444-4444-4444-444444444444', 'Dr. Sarah Jenkins')
+ON CONFLICT (id) DO NOTHING;
+
 -- Seed Subjects (Module Catalog)
 INSERT INTO subjects (id, name, code, semester)
 VALUES
@@ -90,12 +105,12 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Classes (Each class represents a cohort taking a subject, with lecturer assigned)
-INSERT INTO classes (id, name, code, subject_id, lecturer_name, year, semester)
+INSERT INTO classes (id, name, code, subject_id, lecturer_id, year, semester)
 VALUES
-  ('c1c1c1c1-1111-1111-1111-111111111111', 'Section S1A', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', 'Dr. Evelyn Martinez', 1, 1),
-  ('c2c2c2c2-2222-2222-2222-222222222222', 'Section S1B', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', 'Prof. Alan Turing', 1, 1),
-  ('c3c3c3c3-3333-3333-3333-333333333333', 'Section S2A', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', 'Prof. Marcus Vance', 1, 2),
-  ('c4c4c4c4-4444-4444-4444-444444444444', 'Section S2B', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', 'Dr. Sarah Jenkins', 1, 2)
+  ('c1c1c1c1-1111-1111-1111-111111111111', 'Section S1A', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 1, 1),
+  ('c2c2c2c2-2222-2222-2222-222222222222', 'Section S1B', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', 'd2222222-2222-2222-2222-222222222222', 1, 1),
+  ('c3c3c3c3-3333-3333-3333-333333333333', 'Section S2A', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', 'd3333333-3333-3333-3333-333333333333', 1, 2),
+  ('c4c4c4c4-4444-4444-4444-444444444444', 'Section S2B', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', 'd4444444-4444-4444-4444-444444444444', 1, 2)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Custom Questions
@@ -114,6 +129,7 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- Disable Row Level Security (RLS) on all tables to allow public anonymous API access
+ALTER TABLE lecturers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE classes DISABLE ROW LEVEL SECURITY;
 ALTER TABLE subjects DISABLE ROW LEVEL SECURITY;
 ALTER TABLE custom_questions DISABLE ROW LEVEL SECURITY;
@@ -121,10 +137,33 @@ ALTER TABLE active_semesters DISABLE ROW LEVEL SECURITY;
 ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE submissions DISABLE ROW LEVEL SECURITY;
 
+-- Setup explicit permissive Policies just in case RLS gets active
+DROP POLICY IF EXISTS "Public access" ON lecturers;
+CREATE POLICY "Public access" ON lecturers FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON classes;
+CREATE POLICY "Public access" ON classes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON subjects;
+CREATE POLICY "Public access" ON subjects FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON custom_questions;
+CREATE POLICY "Public access" ON custom_questions FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON active_semesters;
+CREATE POLICY "Public access" ON active_semesters FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON settings;
+CREATE POLICY "Public access" ON settings FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public access" ON submissions;
+CREATE POLICY "Public access" ON submissions FOR ALL USING (true) WITH CHECK (true);
+
 -- Grant API permissions to anon, authenticated, and service_role
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;
+GRANT ALL ON TABLE lecturers TO anon, authenticated, service_role;
 GRANT ALL ON TABLE classes TO anon, authenticated, service_role;
 GRANT ALL ON TABLE subjects TO anon, authenticated, service_role;
 GRANT ALL ON TABLE custom_questions TO anon, authenticated, service_role;

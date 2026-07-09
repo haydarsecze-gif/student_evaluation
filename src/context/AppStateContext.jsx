@@ -9,6 +9,7 @@ export const AppStateProvider = ({ children }) => {
 
   const [formActive, setFormActive] = useState(true);
   const [adminPassword, setAdminPassword] = useState('admin123'); // Default password
+  const [lecturers, setLecturers] = useState([]);
   const [classes, setClasses] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -24,6 +25,7 @@ export const AppStateProvider = ({ children }) => {
       setLoading(true);
       
       const [
+        resLecturers,
         resClasses,
         resSubjects,
         resQuestions,
@@ -31,6 +33,7 @@ export const AppStateProvider = ({ children }) => {
         resSettings,
         resSubmissions
       ] = await Promise.all([
+        supabase.from('lecturers').select('*').order('name'),
         supabase.from('classes').select('*'),
         supabase.from('subjects').select('*').order('code'),
         supabase.from('custom_questions').select('*').order('created_at'),
@@ -39,6 +42,7 @@ export const AppStateProvider = ({ children }) => {
         supabase.from('submissions').select('*').order('timestamp', { ascending: false })
       ]);
 
+      if (resLecturers.error) throw resLecturers.error;
       if (resClasses.error) throw resClasses.error;
       if (resSubjects.error) throw resSubjects.error;
       if (resQuestions.error) throw resQuestions.error;
@@ -46,19 +50,22 @@ export const AppStateProvider = ({ children }) => {
       if (resSettings.error) throw resSettings.error;
       if (resSubmissions.error) throw resSubmissions.error;
 
+      // Set state values
+      setLecturers(resLecturers.data || []);
+      setSubjects(resSubjects.data || []);
+      setCustomQuestions(resQuestions.data || []);
+
       // Map classes to camelCase local state structure
       const mappedClasses = (resClasses.data || []).map(cls => ({
         id: cls.id,
         name: cls.name,
         code: cls.code,
         subjectId: cls.subject_id,
-        lecturerName: cls.lecturer_name,
+        lecturerId: cls.lecturer_id,
         year: cls.year,
         semester: cls.semester
       }));
       setClasses(mappedClasses);
-      setSubjects(resSubjects.data || []);
-      setCustomQuestions(resQuestions.data || []);
 
       // Map semesters
       const semMap = { foundation: [1, 2], degree: [1, 2, 3, 4, 5, 6] };
@@ -142,6 +149,67 @@ export const AppStateProvider = ({ children }) => {
     }
   };
 
+  // CRUD for Lecturers
+  const addLecturer = async (name) => {
+    try {
+      const trimmed = name.trim();
+      const existing = lecturers.find(l => l.name.toLowerCase() === trimmed.toLowerCase());
+      if (existing) return existing;
+
+      const { data, error } = await supabase.from('lecturers').insert([{ name: trimmed }]).select();
+      if (error) throw error;
+
+      const newL = data[0];
+      setLecturers(prev => [...prev, newL].sort((a, b) => a.name.localeCompare(b.name)));
+      return newL;
+    } catch (err) {
+      console.error("Error adding lecturer:", err);
+      alert("Database error: " + err.message);
+      return null;
+    }
+  };
+
+  const updateLecturer = async (updatedL) => {
+    try {
+      const { error } = await supabase
+        .from('lecturers')
+        .update({ name: updatedL.name.trim() })
+        .eq('id', updatedL.id);
+      if (error) throw error;
+      setLecturers(prev => prev.map(l => l.id === updatedL.id ? updatedL : l).sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (err) {
+      console.error("Error updating lecturer:", err);
+      alert("Database error: " + err.message);
+    }
+  };
+
+  const deleteLecturer = async (id) => {
+    try {
+      const { error } = await supabase.from('lecturers').delete().eq('id', id);
+      if (error) throw error;
+      setLecturers(prev => prev.filter(l => l.id !== id));
+      // Cascade deletions in classes referencing it
+      setClasses(prev => prev.filter(c => c.lecturerId !== id));
+    } catch (err) {
+      console.error("Error deleting lecturer:", err);
+      alert("Database error: " + err.message);
+    }
+  };
+
+  // Helper to ensure lecturer exists, returns their ID
+  const ensureLecturerExists = async (name) => {
+    const trimmed = name.trim();
+    if (!trimmed) return null;
+    
+    // Check local state
+    const existing = lecturers.find(l => l.name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) return existing.id;
+
+    // Insert new to database
+    const newL = await addLecturer(trimmed);
+    return newL ? newL.id : null;
+  };
+
   // CRUD for Classes
   const addClass = async (cls) => {
     try {
@@ -149,7 +217,7 @@ export const AppStateProvider = ({ children }) => {
         name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
-        lecturer_name: cls.lecturerName,
+        lecturer_id: cls.lecturerId,
         year: cls.year,
         semester: cls.semester
       };
@@ -161,7 +229,7 @@ export const AppStateProvider = ({ children }) => {
         name: item.name,
         code: item.code,
         subjectId: item.subject_id,
-        lecturerName: item.lecturer_name,
+        lecturerId: item.lecturer_id,
         year: item.year,
         semester: item.semester
       }));
@@ -178,7 +246,7 @@ export const AppStateProvider = ({ children }) => {
         name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
-        lecturer_name: cls.lecturerName,
+        lecturer_id: cls.lecturerId,
         year: cls.year,
         semester: cls.semester
       };
@@ -367,6 +435,11 @@ export const AppStateProvider = ({ children }) => {
       setFormActive: toggleFormActive,
       adminPassword,
       updateAdminPassword,
+      lecturers,
+      addLecturer,
+      updateLecturer,
+      deleteLecturer,
+      ensureLecturerExists,
       classes,
       addClass,
       updateClass,

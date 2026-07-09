@@ -6,6 +6,7 @@ export default function FormPage() {
     formActive,
     classes,
     subjects,
+    lecturers,
     addSubmission,
     customQuestions,
     activeSemesters
@@ -126,6 +127,9 @@ export default function FormPage() {
     const selectedClass = classes.find(c => c.id === classId);
     if (!selectedClass) return;
 
+    const lecturerObj = lecturers.find(l => l.id === selectedClass.lecturerId);
+    const lecturerName = lecturerObj ? lecturerObj.name : 'Unknown Lecturer';
+
     // Add submission with basic fields + custom answers
     addSubmission({
       name,
@@ -136,7 +140,7 @@ export default function FormPage() {
       classId,
       subjectId: selectedClass.subjectId,
       score: parseInt(score, 10),
-      lecturer: selectedClass.lecturerName,
+      lecturer: lecturerName,
       customAnswers
     });
 
@@ -344,10 +348,12 @@ export default function FormPage() {
                   </option>
                   {availableClasses.map(c => {
                     const subjectObj = subjects.find(s => s.id === c.subjectId);
+                    const lecturerObj = lecturers.find(l => l.id === c.lecturerId);
                     const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
+                    const lecturerDisplay = lecturerObj ? lecturerObj.name : 'Unknown Lecturer';
                     return (
                       <option key={c.id} value={c.id}>
-                        {subjectDisplay} [Class: {c.code}] - {c.lecturerName}
+                        {subjectDisplay} [Class: {c.code}] - {lecturerDisplay}
                       </option>
                     );
                   })}

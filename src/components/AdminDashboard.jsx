@@ -17,6 +17,13 @@ export default function AdminDashboard() {
     submissions,
     deleteSubmission,
     
+    // Lecturers context
+    lecturers,
+    addLecturer,
+    updateLecturer,
+    deleteLecturer,
+    ensureLecturerExists,
+
     customQuestions,
     addQuestion,
     updateQuestion,
@@ -30,7 +37,7 @@ export default function AdminDashboard() {
 
   // Tab controller for Admin Console
   const [adminTab, setAdminTab] = useState('records'); // 'records' | 'classes' | 'formDesign'
-  const [classesSubTab, setClassesSubTab] = useState('classesList'); // 'classesList' | 'subjectsList'
+  const [classesSubTab, setClassesSubTab] = useState('classesList'); // 'classesList' | 'subjectsList' | 'lecturersList'
 
   // Master Logs Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,6 +60,10 @@ export default function AdminDashboard() {
   const [newSubName, setNewSubName] = useState('');
   const [newSubCode, setNewSubCode] = useState('');
   const [newSubSemester, setNewSubSemester] = useState(1);
+
+  // Form states for Lecturers
+  const [editingLecturer, setEditingLecturer] = useState(null);
+  const [newLecturerName, setNewLecturerName] = useState('');
 
   // Custom Question Form state
   const [editingQuestion, setEditingQuestion] = useState(null);
@@ -161,11 +172,8 @@ export default function AdminDashboard() {
     XLSX.writeFile(wb, `Student_Evaluation_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  // Extract unique lecturer names from current classes for the datalist dropdown
-  const existingLecturers = Array.from(new Set(classes.map(c => c.lecturerName).filter(Boolean)));
-
-  // Add or Edit Class
-  const handleClassSubmit = (e) => {
+  // Add or Edit Class (Auto-creates Lecturer if not exists)
+  const handleClassSubmit = async (e) => {
     e.preventDefault();
     if (!classSubjectId) {
       setCrudError('Please select a Module/Subject first.');
@@ -183,6 +191,13 @@ export default function AdminDashboard() {
       return;
     }
 
+    // Ensure the Lecturer exists in database, creating if new
+    const lecturerId = await ensureLecturerExists(newClassLecturer);
+    if (!lecturerId) {
+      setCrudError('Error assigning lecturer name.');
+      return;
+    }
+
     // Auto-derive year based on semester
     const targetSemester = parseInt(subjectObj.semester, 10);
     const targetYear = targetSemester <= 2 ? 1 : targetSemester <= 4 ? 2 : 3;
@@ -191,7 +206,7 @@ export default function AdminDashboard() {
       name: newClassName.trim(),
       code: newClassCode.trim().toUpperCase(),
       subjectId: classSubjectId,
-      lecturerName: newClassLecturer.trim(),
+      lecturerId: lecturerId,
       year: targetYear,
       semester: targetSemester
     };
@@ -219,7 +234,8 @@ export default function AdminDashboard() {
     setClassSubjectId(cls.subjectId);
     setNewClassName(cls.name);
     setNewClassCode(cls.code);
-    setNewClassLecturer(cls.lecturerName);
+    const lecturerObj = lecturers.find(l => l.id === cls.lecturerId);
+    setNewClassLecturer(lecturerObj ? lecturerObj.name : '');
     setCrudError('');
   };
 
@@ -258,6 +274,34 @@ export default function AdminDashboard() {
     setNewSubName(sub.name);
     setNewSubCode(sub.code);
     setNewSubSemester(sub.semester || 1);
+    setCrudError('');
+  };
+
+  // Add or Edit Lecturer
+  const handleLecturerSubmit = (e) => {
+    e.preventDefault();
+    if (!newLecturerName.trim()) {
+      setCrudError('Lecturer name is required.');
+      return;
+    }
+
+    if (editingLecturer) {
+      updateLecturer({
+        id: editingLecturer.id,
+        name: newLecturerName.trim()
+      });
+      setEditingLecturer(null);
+    } else {
+      addLecturer(newLecturerName);
+    }
+
+    setNewLecturerName('');
+    setCrudError('');
+  };
+
+  const startEditLecturer = (l) => {
+    setEditingLecturer(l);
+    setNewLecturerName(l.name);
     setCrudError('');
   };
 
@@ -415,7 +459,7 @@ export default function AdminDashboard() {
           onClick={() => setAdminTab('classes')}
           className={`btn btn-sm ${adminTab === 'classes' ? 'btn-primary' : 'btn-secondary'}`}
         >
-          Classes &amp; Subjects ({classes.length} Classes, {subjects.length} Modules)
+          Classes &amp; Subjects ({classes.length} Classes, {subjects.length} Modules, {lecturers.length} Lecturers)
         </button>
 
         <button 
@@ -623,12 +667,12 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* TAB CONTENT: UNIFIED CLASSES & SUBJECTS */}
+      {/* TAB CONTENT: UNIFIED CLASSES & SUBJECTS & LECTURERS */}
       {adminTab === 'classes' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Classes Sub-Tabs */}
-          <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
             <button
               onClick={() => setClassesSubTab('classesList')}
               className={`btn btn-sm ${classesSubTab === 'classesList' ? 'btn-primary' : 'btn-secondary'}`}
@@ -642,6 +686,13 @@ export default function AdminDashboard() {
               style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
             >
               Subjects / Modules Catalog ({subjects.length})
+            </button>
+            <button
+              onClick={() => setClassesSubTab('lecturersList')}
+              className={`btn btn-sm ${classesSubTab === 'lecturersList' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+            >
+              Lecturers Directory ({lecturers.length})
             </button>
           </div>
 
@@ -667,6 +718,7 @@ export default function AdminDashboard() {
                     <tbody>
                       {classes.map(cls => {
                         const subjectObj = subjects.find(s => s.id === cls.subjectId);
+                        const lecturerObj = lecturers.find(l => l.id === cls.lecturerId);
                         return (
                           <tr key={cls.id}>
                             <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
@@ -681,7 +733,9 @@ export default function AdminDashboard() {
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned Module</span>
                               )}
                             </td>
-                            <td style={{ color: 'var(--primary)', fontWeight: 500 }}>{cls.lecturerName}</td>
+                            <td style={{ color: 'var(--primary)', fontWeight: 500 }}>
+                              {lecturerObj ? lecturerObj.name : 'Unknown Lecturer'}
+                            </td>
                             <td style={{ fontSize: '0.85rem' }}>Year {cls.year || 1} &bull; Sem {cls.semester || 1}</td>
                             <td style={{ textAlign: 'center' }}>
                               <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
@@ -780,11 +834,11 @@ export default function AdminDashboard() {
                           onChange={(e) => setNewClassLecturer(e.target.value)}
                         />
                         <datalist id="lecturer-suggestions">
-                          {existingLecturers.map(name => (
-                            <option key={name} value={name} />
+                          {lecturers.map(l => (
+                            <option key={l.id} value={l.name} />
                           ))}
                         </datalist>
-                        <span className="form-input-hint">Autocomplete loads previous lecturers, or you can enter a new one.</span>
+                        <span className="form-input-hint">If this is a new lecturer name, typing it will automatically add them to the Lecturers list upon saving!</span>
                       </div>
 
                       <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
@@ -934,6 +988,113 @@ export default function AdminDashboard() {
                             setNewSubName('');
                             setNewSubCode('');
                             setNewSubSemester(1);
+                            setCrudError('');
+                          }}
+                          className="btn btn-secondary btn-sm"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {classesSubTab === 'lecturersList' && (
+            /* SECTION 3: LECTURERS MANAGER */
+            <div>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                Manage Lecturers (Staff Directory)
+              </h2>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+                <div className="table-container glass-panel">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>Lecturer Name</th>
+                        <th>Classes Currently Teaching</th>
+                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lecturers.map(l => {
+                        const lClasses = classes.filter(c => c.lecturerId === l.id);
+                        return (
+                          <tr key={l.id}>
+                            <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
+                            <td>
+                              {lClasses.length > 0 ? (
+                                lClasses.map(c => `${c.code} (${c.name})`).join(', ')
+                              ) : (
+                                <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No active classes</span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                                <button
+                                  onClick={() => startEditLecturer(l)}
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  title="Edit Lecturer Name"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Deleting lecturer "${l.name}" will automatically delete any classes they are teaching. Proceed?`)) {
+                                      deleteLecturer(l.id);
+                                    }
+                                  }}
+                                  className="btn btn-secondary btn-sm btn-danger"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  title="Delete Lecturer"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
+                    {editingLecturer ? 'Edit Lecturer Details' : 'Register New Lecturer'}
+                  </h3>
+
+                  {crudError && (
+                    <div style={{ color: '#f87171', fontSize: '0.8rem', marginBottom: '1rem', background: 'rgba(239,68,68,0.1)', padding: '0.5rem', borderRadius: '4px' }}>
+                      {crudError}
+                    </div>
+                  )}
+
+                  <form onSubmit={handleLecturerSubmit}>
+                    <div className="form-group">
+                      <label className="form-label">Full Name</label>
+                      <input
+                        type="text"
+                        className="form-input btn-sm"
+                        placeholder="e.g. Dr. Evelyn Martinez"
+                        value={newLecturerName}
+                        onChange={(e) => setNewLecturerName(e.target.value)}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+                      <button type="submit" className="btn btn-primary btn-sm" style={{ flexGrow: 1 }}>
+                        {editingLecturer ? 'Update Lecturer' : 'Register Lecturer'}
+                      </button>
+                      {editingLecturer && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingLecturer(null);
+                            setNewLecturerName('');
                             setCrudError('');
                           }}
                           className="btn btn-secondary btn-sm"
