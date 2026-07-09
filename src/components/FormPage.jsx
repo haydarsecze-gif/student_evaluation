@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAppState } from '../context/AppStateContext';
-import { ShieldAlert, CheckCircle2, User, Mail, Phone, Calendar, BookOpen, GraduationCap, FileText, AlertCircle } from 'lucide-react';
 
 export default function FormPage() {
-  const {
+  const { 
     formActive,
     classes,
+    subjects,
+    addSubmission,
     getSubjectsBySemester,
     getLecturersForConfig,
     customQuestions,
-    activeSemesters,
-    addSubmission
+    activeSemesters
   } = useAppState();
 
-  // Basic Form States
+  // Form input states
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -114,24 +114,24 @@ export default function FormPage() {
     if (!email.trim()) {
       tempErrors.email = 'Email address is required';
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      tempErrors.email = 'Please enter a valid email address';
+      tempErrors.email = 'Invalid email address';
     }
 
     if (!phone.trim()) {
       tempErrors.phone = 'Phone number is required';
-    } else if (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/.test(phone)) {
-      tempErrors.phone = 'Please enter a valid phone number';
+    } else if (!/^\+?[0-9\s-]{6,20}$/.test(phone)) {
+      tempErrors.phone = 'Invalid phone number format';
     }
 
     if (!program) tempErrors.program = 'Please select a program';
     if (!semester) tempErrors.semester = 'Please select a semester';
     if (!classId) tempErrors.classId = 'Please select a class';
     if (!subjectId) tempErrors.subjectId = 'Please select a subject';
-
+    
+    // Lecturer validation - only required if there are lecturers assigned
     if (classId && semester && subjectId) {
-      if (availableLecturers.length === 0) {
-        tempErrors.lecturer = 'No lecturers assigned for this configuration (Admin setup required)';
-      } else if (!lecturer) {
+      const assigned = getLecturersForConfig(classId, semester, subjectId);
+      if (assigned.length > 0 && !lecturer) {
         tempErrors.lecturer = 'Please select a lecturer';
       }
     }
@@ -198,9 +198,6 @@ export default function FormPage() {
   if (!formActive) {
     return (
       <div className="form-closed-container glass-panel animate-fade-in">
-        <div className="form-closed-icon">
-          <ShieldAlert size={36} />
-        </div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, marginBottom: '0.75rem' }}>
           Form Submissions Closed
         </h2>
@@ -218,18 +215,14 @@ export default function FormPage() {
   return (
     <div className="animate-fade-in" style={{ maxWidth: '680px', margin: '2rem auto', width: '100%' }}>
       
-      {/* Success Notification */}
+      {/* Success Notification (No icons) */}
       {showSuccess && (
         <div className="glass-panel animate-fade-in" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1rem',
           padding: '1.25rem',
           marginBottom: '1.5rem',
           borderLeft: '4px solid var(--success)',
-          background: 'rgba(16, 185, 129, 0.08)'
+          background: 'var(--success-glow)'
         }}>
-          <CheckCircle2 color="var(--success)" size={24} />
           <div>
             <h4 style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Registration Complete!</h4>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
@@ -258,8 +251,7 @@ export default function FormPage() {
             paddingBottom: '1.5rem',
             marginBottom: '1.5rem'
           }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <User size={18} color="var(--primary)" />
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--primary)' }}>
               Personal Information
             </h3>
 
@@ -316,8 +308,7 @@ export default function FormPage() {
             paddingBottom: '1.5rem',
             marginBottom: '1.5rem'
           }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <GraduationCap size={18} color="var(--primary)" />
+            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--primary)' }}>
               Academic Alignment
             </h3>
 
@@ -458,8 +449,7 @@ export default function FormPage() {
               </div>
               {errors.lecturer && <span className="form-input-error-msg">{errors.lecturer}</span>}
               {classId && semester && subjectId && availableLecturers.length === 0 && (
-                <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center', marginTop: '0.25rem', color: '#fbbf24', fontSize: '0.75rem' }}>
-                  <AlertCircle size={12} />
+                <div style={{ marginTop: '0.25rem', color: '#d97706', fontSize: '0.75rem' }}>
                   <span>Admin must create a Lecturer Assignment for this configuration.</span>
                 </div>
               )}
@@ -484,7 +474,7 @@ export default function FormPage() {
                 style={{
                   width: '100%',
                   height: '6px',
-                  background: 'rgba(255,255,255,0.1)',
+                  background: 'rgba(0,0,0,0.06)',
                   borderRadius: '3px',
                   outline: 'none',
                   WebkitAppearance: 'none',
@@ -502,8 +492,7 @@ export default function FormPage() {
               paddingBottom: '1.5rem',
               marginBottom: '1.5rem'
             }}>
-              <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <BookOpen size={18} color="var(--primary)" />
+              <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--primary)' }}>
                 Additional Questionnaire
               </h3>
 
@@ -522,35 +511,35 @@ export default function FormPage() {
                       <input
                         type="text"
                         className={`form-input ${error ? 'error' : ''}`}
-                        placeholder="Your answer"
+                        placeholder="Provide your short answer..."
                         value={answerValue || ''}
                         onChange={(e) => handleCustomChange(q.id, e.target.value)}
                       />
                     )}
 
-                    {/* RENDER: Paragraph */}
+                    {/* RENDER: Long Answer */}
                     {q.type === 'long' && (
                       <textarea
-                        rows={3}
                         className={`form-input ${error ? 'error' : ''}`}
-                        placeholder="Your answer"
+                        rows="3"
+                        placeholder="Provide your long answer/feedback..."
                         value={answerValue || ''}
                         onChange={(e) => handleCustomChange(q.id, e.target.value)}
-                        style={{ resize: 'vertical', minHeight: '80px' }}
+                        style={{ resize: 'vertical' }}
                       />
                     )}
 
-                    {/* RENDER: Multiple Choice (Radio) */}
+                    {/* RENDER: Radio Buttons */}
                     {q.type === 'radio' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        {q.options.map((opt, idx) => (
-                          <label key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        {q.options.map((opt, oIdx) => (
+                          <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                             <input
                               type="radio"
-                              name={`custom-radio-${q.id}`}
+                              name={`custom_${q.id}`}
                               checked={answerValue === opt}
                               onChange={() => handleCustomChange(q.id, opt)}
-                              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                             />
                             <span>{opt}</span>
                           </label>
@@ -560,16 +549,16 @@ export default function FormPage() {
 
                     {/* RENDER: Checkboxes */}
                     {q.type === 'checkbox' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
-                        {q.options.map((opt, idx) => {
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                        {q.options.map((opt, oIdx) => {
                           const isChecked = Array.isArray(answerValue) && answerValue.includes(opt);
                           return (
-                            <label key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                               <input
                                 type="checkbox"
                                 checked={isChecked}
                                 onChange={() => handleCustomChange(q.id, opt, true)}
-                                style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
                               />
                               <span>{opt}</span>
                             </label>
@@ -585,10 +574,9 @@ export default function FormPage() {
             </div>
           )}
 
-          {/* Submit Button */}
-          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.9rem', fontSize: '1.05rem' }}>
-            <FileText size={18} />
-            Register Student Record
+          {/* Form Actions */}
+          <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '0.9rem', fontSize: '1rem' }}>
+            Submit Evaluation
           </button>
         </form>
       </div>

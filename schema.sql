@@ -126,3 +126,13 @@ VALUES
   ('Alice Smith', 'alice.smith@university.edu', '555-0188', 'degree', 3, 'c1c1c1c1-1111-1111-1111-111111111111', 'a3a3a3a3-3333-3333-3333-333333333333', 92, 'Dr. Evelyn Martinez', '{"e1e1e1e1-1111-1111-1111-111111111111": "Yes, extensively", "e2e2e2e2-2222-2222-2222-222222222222": ["Official Documentation", "Practical Lab Sheets"], "e3e3e3e3-3333-3333-3333-333333333333": "Ace the dynamic coding problems."}'::JSONB),
   ('Bob Johnson', 'bob.johnson@university.edu', '555-0177', 'foundation', 2, 'c2c2c2c2-2222-2222-2222-222222222222', 'b4b4b4b4-4444-4444-4444-444411111111', 78, 'Prof. Marcus Vance', '{"e1e1e1e1-1111-1111-1111-111111111111": "No experience", "e2e2e2e2-2222-2222-2222-222222222222": ["Video Tutorials"], "e3e3e3e3-3333-3333-3333-333333333333": "Get comfortable writing OOP structures."}'::JSONB)
 ON CONFLICT DO NOTHING;
+
+-- Disable Row Level Security (RLS) on all tables to allow public anonymous API access
+ALTER TABLE classes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE subjects DISABLE ROW LEVEL SECURITY;
+ALTER TABLE lecturer_assignments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_questions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE active_semesters DISABLE ROW LEVEL SECURITY;
+ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE submissions DISABLE ROW LEVEL SECURITY;
+

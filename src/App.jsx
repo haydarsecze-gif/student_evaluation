@@ -3,7 +3,6 @@ import { AppStateProvider, useAppState } from './context/AppStateContext';
 import Navbar from './components/Navbar';
 import FormPage from './components/FormPage';
 import AdminDashboard from './components/AdminDashboard';
-import { Loader2, ServerCrash, Lock, ShieldAlert, KeyRound } from 'lucide-react';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('form'); // 'form' | 'admin'
@@ -38,7 +37,7 @@ function AppContent() {
     setActiveTab(tab);
   };
 
-  // Premium loading state overlay
+  // Premium loading state overlay (No icons)
   if (loading) {
     return (
       <div style={{
@@ -56,10 +55,8 @@ function AppContent() {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '1rem',
-          boxShadow: 'var(--shadow-glow)'
+          gap: '1rem'
         }}>
-          <Loader2 className="animate-spin" size={40} color="var(--primary)" style={{ animationDuration: '1.5s' }} />
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }}>Syncing with Database...</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Loading parameters from Supabase backend</div>
         </div>
@@ -67,7 +64,7 @@ function AppContent() {
     );
   }
 
-  // Premium database load error page
+  // Premium database load error page (No icons)
   if (fetchError) {
     return (
       <div style={{
@@ -89,27 +86,14 @@ function AppContent() {
           alignItems: 'center',
           gap: '1rem',
           borderLeft: '4px solid var(--danger)',
-          background: 'rgba(239, 68, 68, 0.03)'
+          background: 'var(--bg-card)'
         }}>
-          <div style={{
-            width: '64px',
-            height: '64px',
-            borderRadius: '50%',
-            background: 'var(--danger-glow)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--danger)',
-            marginBottom: '0.5rem'
-          }}>
-            <ServerCrash size={32} />
-          </div>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>Database Connection Error</h2>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
             Failed to establish connection with Supabase. Please make sure you have executed the database setup SQL commands in your Supabase SQL Editor.
           </p>
           <div style={{
-            background: 'rgba(0,0,0,0.2)',
+            background: 'var(--bg-input)',
             padding: '0.75rem 1rem',
             borderRadius: 'var(--radius-sm)',
             width: '100%',
@@ -146,7 +130,7 @@ function AppContent() {
         ) : isAdminAuthenticated ? (
           <AdminDashboard />
         ) : (
-          /* Glassmorphic Password Entry Screen */
+          /* Locked Password Entry Screen (No icons) */
           <div className="animate-fade-in" style={{ maxWidth: '420px', margin: '6rem auto', width: '100%', padding: '0 1rem' }}>
             <div 
               className={`glass-panel ${shakeCard ? 'animate-shake' : ''}`} 
@@ -165,22 +149,6 @@ function AppContent() {
                 }
               `}</style>
               
-              <div style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                background: 'var(--primary-glow)',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--primary)',
-                marginBottom: '1.25rem',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
-                boxShadow: 'var(--shadow-glow)'
-              }}>
-                <Lock size={26} />
-              </div>
-              
               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: '1.25rem', marginBottom: '0.5rem' }}>
                 Console Access Restrained
               </h3>
@@ -190,18 +158,14 @@ function AppContent() {
 
               <form onSubmit={handleAuthSubmit}>
                 <div className="form-group" style={{ marginBottom: '1.5rem' }}>
-                  <div style={{ position: 'relative', width: '100%' }}>
-                    <input
-                      type="password"
-                      className={`form-input ${authError ? 'error' : ''}`}
-                      placeholder="Enter Password (default: admin123)"
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      style={{ paddingLeft: '2.25rem' }}
-                      autoFocus
-                    />
-                    <KeyRound size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  </div>
+                  <input
+                    type="password"
+                    className={`form-input ${authError ? 'error' : ''}`}
+                    placeholder="Enter Password (default: admin123)"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    autoFocus
+                  />
                   {authError && <span className="form-input-error-msg" style={{ justifyContent: 'center' }}>{authError}</span>}
                 </div>
 

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
-import { 
-  Plus, Edit2, Trash2, Download, Search, Settings, 
-  FolderPlus, BookOpen, Layers, Users, Calendar, 
-  HelpCircle, Eye, EyeOff, Check, X, ClipboardSignature,
-  FileSpreadsheet
-} from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 export default function AdminDashboard() {
@@ -341,8 +335,7 @@ export default function AdminDashboard() {
     return (
       <div className="glass-panel" style={{ padding: '1.5rem', animation: 'fadeIn 0.3s ease' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <ClipboardSignature size={18} color="var(--primary)" />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>
             Assignments: {cls.code}
           </h3>
           <button 
@@ -359,7 +352,7 @@ export default function AdminDashboard() {
         </p>
 
         {classSubjects.length === 0 ? (
-          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(255,255,255,0.02)', borderRadius: '8px' }}>
+          <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', background: 'rgba(0,0,0,0.02)', borderRadius: '8px' }}>
             No subjects configured for Semester {cls.semester} yet. Create subjects under the "Subjects" tab first.
           </div>
         ) : (
@@ -369,8 +362,8 @@ export default function AdminDashboard() {
               const inputVal = assigningLecturerBySubject[sub.id] || '';
 
               return (
-                <div key={sub.id} className="glass-panel" style={{ padding: '1rem', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '0.5rem' }}>
+                <div key={sub.id} className="glass-panel" style={{ padding: '1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                     <div>
                       <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>{sub.name}</span>
                       <span style={{ fontSize: '0.75rem', color: 'var(--secondary)', marginLeft: '0.5rem', fontFamily: 'var(--font-mono)' }}>{sub.code}</span>
@@ -383,14 +376,14 @@ export default function AdminDashboard() {
                       <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No lecturers assigned yet</span>
                     ) : (
                       subLa.map(la => (
-                        <div key={la.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(236,72,153,0.1)', border: '1px solid rgba(236,72,153,0.2)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--primary)' }}>
+                        <div key={la.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'var(--primary-glow)', border: '1px solid var(--border-color)', padding: '0.15rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', color: 'var(--primary)' }}>
                           <span>{la.lecturerName}</span>
                           <button 
                             onClick={() => deleteLecturerAssignment(la.id)}
-                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center' }}
+                            style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: 0, fontWeight: 'bold' }}
                             title="Remove Lecturer"
                           >
-                            <X size={12} />
+                            &times;
                           </button>
                         </div>
                       ))
@@ -449,7 +442,7 @@ export default function AdminDashboard() {
   return (
     <div className="app-container animate-fade-in" style={{ padding: '1.5rem' }}>
       
-      {/* Top Header Controls Panel */}
+      {/* Top Header Controls Panel (No icons) */}
       <div className="glass-panel" style={{
         padding: '1.5rem',
         display: 'flex',
@@ -475,7 +468,7 @@ export default function AdminDashboard() {
             alignItems: 'center',
             gap: '0.75rem',
             padding: '0.5rem 1rem',
-            background: 'rgba(255,255,255,0.02)',
+            background: 'var(--bg-input)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)'
           }}>
@@ -500,47 +493,38 @@ export default function AdminDashboard() {
           </div>
 
           <button onClick={handleExportExcel} className="btn btn-primary" style={{ gap: '0.5rem' }}>
-            <FileSpreadsheet size={18} />
             Export Multi-Tab Excel
           </button>
         </div>
       </div>
 
-      {/* Admin Tabs Navigation */}
+      {/* Admin Tabs Navigation (No icons) */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap' }}>
         <button 
           onClick={() => setAdminTab('records')}
           className={`btn btn-sm ${adminTab === 'records' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ gap: '0.35rem' }}
         >
-          <Layers size={14} />
           Evaluation Records ({submissions.length})
         </button>
 
         <button 
           onClick={() => setAdminTab('classes')}
           className={`btn btn-sm ${adminTab === 'classes' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ gap: '0.35rem' }}
         >
-          <Users size={14} />
           Classes &amp; Lecturers ({classes.length})
         </button>
 
         <button 
           onClick={() => setAdminTab('subjects')}
           className={`btn btn-sm ${adminTab === 'subjects' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ gap: '0.35rem' }}
         >
-          <BookOpen size={14} />
           Manage Subjects ({subjects.length})
         </button>
 
         <button 
           onClick={() => setAdminTab('formDesign')}
           className={`btn btn-sm ${adminTab === 'formDesign' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ gap: '0.35rem' }}
         >
-          <Settings size={14} />
           Form Design &amp; Semesters
         </button>
       </div>
@@ -561,9 +545,7 @@ export default function AdminDashboard() {
                     placeholder="Search by student name or email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    style={{ paddingLeft: '2.25rem' }}
                   />
-                  <Search size={16} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 </div>
 
                 <select className="form-input" style={{ width: '180px' }} value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
@@ -592,7 +574,6 @@ export default function AdminDashboard() {
 
               {filteredSubmissions.length === 0 ? (
                 <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  <HelpCircle size={32} style={{ marginBottom: '1rem', color: 'var(--text-muted)' }} />
                   <div style={{ fontSize: '1rem', fontWeight: 500 }}>No matching evaluation records found</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Try adjusting your search query or dropdown filter selectors.</div>
                 </div>
@@ -600,7 +581,7 @@ export default function AdminDashboard() {
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th style={{ width: '32px' }}></th>
+                      <th style={{ width: '60px' }}>Answers</th>
                       <th>Student</th>
                       <th>Class &amp; Subject</th>
                       <th style={{ width: '110px' }}>Score</th>
@@ -619,21 +600,15 @@ export default function AdminDashboard() {
                       return (
                         <React.Fragment key={s.id}>
                           <tr>
-                            <td>
+                            <td style={{ textAlign: 'center' }}>
                               {customQuestions.length > 0 && (
                                 <button
                                   onClick={() => setExpandedSubmissionId(isExpanded ? null : s.id)}
-                                  style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--text-secondary)',
-                                    cursor: 'pointer',
-                                    padding: '0.25rem',
-                                    display: 'inline-flex'
-                                  }}
-                                  title={isExpanded ? "Collapse questionnaire answers" : "View custom questions answers"}
+                                  className="btn btn-secondary btn-sm"
+                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                  title={isExpanded ? "Hide answers" : "View answers"}
                                 >
-                                  {isExpanded ? <EyeOff size={16} /> : <Eye size={16} />}
+                                  {isExpanded ? "HIDE" : "SHOW"}
                                 </button>
                               )}
                             </td>
@@ -667,15 +642,15 @@ export default function AdminDashboard() {
                                   }
                                 }}
                                 className="btn btn-secondary btn-sm btn-danger"
-                                style={{ padding: '0.35rem' }}
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                                 title="Delete Submission Record"
                               >
-                                <Trash2 size={14} />
+                                Delete
                               </button>
                             </td>
                           </tr>
                           {isExpanded && (
-                            <tr style={{ background: 'rgba(255,255,255,0.01)' }}>
+                            <tr style={{ background: 'rgba(0,0,0,0.01)' }}>
                               <td colSpan={7} style={{ padding: '1rem 1.5rem' }}>
                                 <div style={{ borderLeft: '2px solid var(--primary)', paddingLeft: '1rem' }}>
                                   <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.50rem' }}>
@@ -736,13 +711,9 @@ export default function AdminDashboard() {
                 <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
                   Submission Count per Term
                 </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {semesterMetrics.map(item => (
-                    <div key={item.semester} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                      <span>Semester {item.semester}</span>
-                      <span className="badge badge-success">{item.count}</span>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                  <span>Semester {item.semester}</span>
+                  <span className="badge badge-success">{item.count}</span>
                 </div>
               </div>
             </div>
@@ -763,7 +734,7 @@ export default function AdminDashboard() {
                   <th>Class Name</th>
                   <th>Year / Semester</th>
                   <th>Subjects &amp; Lecturers</th>
-                  <th style={{ textAlign: 'center', width: '120px' }}>Actions</th>
+                  <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -793,25 +764,25 @@ export default function AdminDashboard() {
                       )}
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                      <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                         <button
                           onClick={() => {
                             setEditingClass(null);
                             setActiveAssignmentClassId(cls.id);
                           }}
                           className={`btn btn-secondary btn-sm ${activeAssignmentClassId === cls.id ? 'btn-primary' : ''}`}
-                          style={{ padding: '0.35rem' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="Assign Lecturers"
                         >
-                          <ClipboardSignature size={14} />
+                          Assign
                         </button>
                         <button
                           onClick={() => startEditClass(cls)}
                           className="btn btn-secondary btn-sm"
-                          style={{ padding: '0.35rem' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="Edit Class"
                         >
-                          <Edit2 size={14} />
+                          Edit
                         </button>
                         <button
                           onClick={() => {
@@ -820,10 +791,10 @@ export default function AdminDashboard() {
                             }
                           }}
                           className="btn btn-secondary btn-sm btn-danger"
-                          style={{ padding: '0.35rem' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="Delete Class"
                         >
-                          <Trash2 size={14} />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -839,8 +810,7 @@ export default function AdminDashboard() {
             ) : (
               /* Create or Edit Class Card */
               <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <FolderPlus size={18} color="var(--primary)" />
+                <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
                   {editingClass ? 'Edit Class Configuration' : 'Create Class Configuration'}
                 </h3>
 
@@ -955,14 +925,14 @@ export default function AdminDashboard() {
                       </span>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                      <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                         <button
                           onClick={() => startEditSubject(sub)}
                           className="btn btn-secondary btn-sm"
-                          style={{ padding: '0.35rem' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="Edit Subject"
                         >
-                          <Edit2 size={14} />
+                          Edit
                         </button>
                         <button
                           onClick={() => {
@@ -971,10 +941,10 @@ export default function AdminDashboard() {
                             }
                           }}
                           className="btn btn-secondary btn-sm btn-danger"
-                          style={{ padding: '0.35rem' }}
+                          style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                           title="Delete Subject"
                         >
-                          <Trash2 size={14} />
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -985,8 +955,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <FolderPlus size={18} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
               {editingSubject ? 'Edit Subject Details' : 'Register New Subject'}
             </h3>
 
@@ -1068,8 +1037,7 @@ export default function AdminDashboard() {
             
             {/* Active Semesters Selector grid */}
             <div className="glass-panel" style={{ padding: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Calendar size={18} color="var(--primary)" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Active Semesters Configurations
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
@@ -1127,8 +1095,7 @@ export default function AdminDashboard() {
 
             {/* Console Security Settings */}
             <div className="glass-panel" style={{ padding: '1.5rem', marginTop: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Settings size={18} color="var(--primary)" />
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
                 Console Security Settings
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
@@ -1169,7 +1136,7 @@ export default function AdminDashboard() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {customQuestions.map(q => (
-                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.15)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                  <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.05)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                         {q.label} {q.required && <span style={{ color: 'var(--danger)' }}>*</span>}
@@ -1184,10 +1151,10 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => startEditQuestion(q)}
                         className="btn btn-secondary btn-sm"
-                        style={{ padding: '0.25rem' }}
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                         title="Edit Question"
                       >
-                        <Edit2 size={12} />
+                        Edit
                       </button>
                       <button
                         onClick={() => {
@@ -1196,10 +1163,10 @@ export default function AdminDashboard() {
                           }
                         }}
                         className="btn btn-secondary btn-sm btn-danger"
-                        style={{ padding: '0.25rem' }}
+                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
                         title="Delete Question"
                       >
-                        <Trash2 size={12} />
+                        Delete
                       </button>
                     </div>
                   </div>
@@ -1216,8 +1183,7 @@ export default function AdminDashboard() {
 
           {/* Create Question Sidebar */}
           <div className="glass-panel" style={{ padding: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Plus size={18} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1.25rem' }}>
               {editingQuestion ? 'Edit Question Field' : 'Create Question Field'}
             </h3>
 
