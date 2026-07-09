@@ -367,18 +367,11 @@ export const AppStateProvider = ({ children }) => {
     }
   };
 
-  // Academic subject logic filtering
+  // Academic subject logic filtering (Simplified: return all subjects matching the exact semester)
   const getSubjectsBySemester = (semester) => {
     if (!semester) return [];
     const semNum = parseInt(semester, 10);
-    const isEarlyYear = [1, 3, 5].includes(semNum);
-    
-    return subjects.filter(sub => {
-      if (sub.type === 'both') return true;
-      if (isEarlyYear && sub.type === 'early') return true;
-      if (!isEarlyYear && sub.type === 'end') return true;
-      return false;
-    });
+    return subjects.filter(sub => parseInt(sub.semester, 10) === semNum);
   };
 
   // Smart lecturer selector mapping

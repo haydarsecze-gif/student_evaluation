@@ -51,19 +51,24 @@ export default function FormPage() {
     }
   }, [classId, semester, subjectId, getLecturersForConfig]);
 
-  // Reset semester/subject when program changes
+  // Reset semester, subject, and class when program changes
   useEffect(() => {
     setSemester('');
     setSubjectId('');
+    setClassId('');
   }, [program]);
 
-  // Reset subject when semester changes
+  // Reset subject and class when semester changes
   useEffect(() => {
     setSubjectId('');
+    setClassId('');
   }, [semester]);
 
   // Get subjects matching early/end cycle
   const availableSubjects = getSubjectsBySemester(semester);
+  
+  // Filter classes matching the selected semester
+  const availableClasses = classes.filter(c => parseInt(c.semester, 10) === parseInt(semester, 10));
 
   // Filter semesters based on program selection and active configurations
   const getVisibleSemesters = () => {
@@ -373,12 +378,16 @@ export default function FormPage() {
                 </label>
                 <div className="select-wrapper">
                   <select
+                    disabled={!semester}
                     className={`form-input ${errors.classId ? 'error' : ''}`}
                     value={classId}
                     onChange={(e) => setClassId(e.target.value)}
+                    style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                   >
-                    <option value="">Select Class</option>
-                    {classes.map(c => (
+                    <option value="">
+                      {!semester ? 'Select Semester first' : 'Select Class'}
+                    </option>
+                    {availableClasses.map(c => (
                       <option key={c.id} value={c.id}>
                         {c.name} ({c.code})
                       </option>

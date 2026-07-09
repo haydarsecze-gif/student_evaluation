@@ -1,20 +1,18 @@
--- Supabase Database Schema Script
--- Run this script in your Supabase SQL Editor (https://supabase.com/dashboard/project/xaqqzuvlpymqofyonave/sql/new)
-
--- 1. Create Classes Table
+-- 1. Create Classes Table (Year and Semester directly on Class)
 CREATE TABLE IF NOT EXISTS classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   code TEXT NOT NULL,
-  lecturer TEXT NOT NULL
+  year INTEGER NOT NULL,
+  semester INTEGER NOT NULL
 );
 
--- 2. Create Subjects Table
+-- 2. Create Subjects Table (Semester directly on Subject)
 CREATE TABLE IF NOT EXISTS subjects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   code TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('early', 'end', 'both'))
+  semester INTEGER NOT NULL
 );
 
 -- 3. Create Lecturer Assignments Table
@@ -22,8 +20,8 @@ CREATE TABLE IF NOT EXISTS lecturer_assignments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   lecturer_name TEXT NOT NULL,
   class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
-  semester INTEGER NOT NULL,
-  subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE
+  subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
+  semester INTEGER NOT NULL
 );
 
 -- 4. Create Custom Questions Table
@@ -42,7 +40,7 @@ CREATE TABLE IF NOT EXISTS active_semesters (
   semesters INTEGER[] NOT NULL
 );
 
--- 6. Create Settings Table (for Form Active toggle)
+-- 6. Create Settings Table (for Form Active toggle & adminPassword)
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL
@@ -65,12 +63,14 @@ CREATE TABLE IF NOT EXISTS submissions (
 );
 
 -- ==========================================
--- SEED INITIAL DATA (Hex-valid UUIDs only)
+-- SEED INITIAL DATA (All UUIDs verified hex-safe)
 -- ==========================================
 
 -- Seed Settings
 INSERT INTO settings (key, value)
-VALUES ('formActive', 'true'::jsonb)
+VALUES 
+  ('formActive', 'true'::jsonb),
+  ('adminPassword', '"admin123"'::jsonb)
 ON CONFLICT (key) DO NOTHING;
 
 -- Seed Active Semesters
@@ -81,37 +81,34 @@ VALUES
 ON CONFLICT (program) DO NOTHING;
 
 -- Seed Classes (c is valid hex)
-INSERT INTO classes (id, name, code, lecturer)
+INSERT INTO classes (id, name, code, year, semester)
 VALUES
-  ('c1c1c1c1-1111-1111-1111-111111111111', 'Computer Science A', 'CS101', 'Dr. Evelyn Martinez'),
-  ('c2c2c2c2-2222-2222-2222-222222222222', 'Software Engineering B', 'SE302', 'Prof. Marcus Vance'),
-  ('c3c3c3c3-3333-3333-3333-333333333333', 'Data Science C', 'DS201', 'Dr. Sarah Jenkins')
+  ('c1c1c1c1-1111-1111-1111-111111111111', 'Computer Science A', 'CS101', 1, 1),
+  ('c2c2c2c2-2222-2222-2222-222222222222', 'Software Engineering B', 'SE302', 1, 2),
+  ('c3c3c3c3-3333-3333-3333-333333333333', 'Data Science C', 'DS201', 2, 3)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Subjects (a and b are valid hex)
-INSERT INTO subjects (id, name, code, type)
+INSERT INTO subjects (id, name, code, semester)
 VALUES
-  ('a1a1a1a1-1111-1111-1111-111111111111', 'Introduction to Programming', 'PROG101', 'early'),
-  ('a2a2a2a2-2222-2222-2222-222222222222', 'Discrete Mathematics', 'MATH105', 'early'),
-  ('a3a3a3a3-3333-3333-3333-333333333333', 'Data Structures & Algorithms', 'DSA201', 'early'),
-  ('b4b4b4b4-4444-4444-4444-444411111111', 'Object-Oriented Programming', 'OOP102', 'end'),
-  ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 'end'),
-  ('b6b6b6b6-6666-6666-6666-666611111111', 'Web Application Development', 'WEB301', 'end'),
-  ('b7b7b7b7-7777-7777-7777-777711111111', 'Academic Writing & Ethics', 'ETH401', 'both')
+  ('a1a1a1a1-1111-1111-1111-111111111111', 'Introduction to Programming', 'PROG101', 1),
+  ('a2a2a2a2-2222-2222-2222-222222222222', 'Discrete Mathematics', 'MATH105', 1),
+  ('a3a3a3a3-3333-3333-3333-333333333333', 'Data Structures & Algorithms', 'DSA201', 3),
+  ('b4b4b4b4-4444-4444-4444-444411111111', 'Object-Oriented Programming', 'OOP102', 2),
+  ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 2),
+  ('b6b6b6b6-6666-6666-6666-666611111111', 'Web Application Development', 'WEB301', 3),
+  ('b7b7b7b7-7777-7777-7777-777711111111', 'Academic Writing & Ethics', 'ETH401', 1)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Lecturer Assignments (f is valid hex)
-INSERT INTO lecturer_assignments (id, lecturer_name, class_id, semester, subject_id)
+INSERT INTO lecturer_assignments (id, lecturer_name, class_id, subject_id, semester)
 VALUES
-  ('f1111111-1111-1111-1111-111111111111', 'Dr. Evelyn Martinez', 'c1c1c1c1-1111-1111-1111-111111111111', 1, 'a1a1a1a1-1111-1111-1111-111111111111'),
-  ('f2222222-2222-2222-2222-222222222222', 'Dr. Evelyn Martinez', 'c1c1c1c1-1111-1111-1111-111111111111', 3, 'a3a3a3a3-3333-3333-3333-333333333333'),
-  ('f3333333-3333-3333-3333-333333333333', 'Prof. Marcus Vance', 'c2c2c2c2-2222-2222-2222-222222222222', 2, 'b4b4b4b4-4444-4444-4444-444411111111'),
-  ('f4444444-4444-4444-4444-444422222222', 'Prof. Marcus Vance', 'c2c2c2c2-2222-2222-2222-222222222222', 4, 'b5b5b5b5-5555-5555-5555-555511111111'),
-  ('f5555555-5555-5555-5555-555533333333', 'Dr. Sarah Jenkins', 'c3c3c3c3-3333-3333-3333-333333333333', 5, 'a2a2a2a2-2222-2222-2222-222222222222'),
-  ('f6666666-6666-6666-6666-666633333333', 'Dr. Evelyn Martinez', 'c1c1c1c1-1111-1111-1111-111111111111', 1, 'b7b7b7b7-7777-7777-7777-777711111111'),
-  ('f7777777-7777-7777-7777-777733333333', 'Prof. Alan Turing', 'c1c1c1c1-1111-1111-1111-111111111111', 1, 'b7b7b7b7-7777-7777-7777-777711111111'),
-  ('l8888888-8888-8888-8888-888833333333', 'Prof. Marcus Vance', 'c2c2c2c2-2222-2222-2222-222222222222', 2, 'b7b7b7b7-7777-7777-7777-777711111111'),
-  ('l9999999-9999-9999-9999-999933333333', 'Dr. Grace Hopper', 'c2c2c2c2-2222-2222-2222-222222222222', 2, 'b7b7b7b7-7777-7777-7777-777711111111')
+  ('f1111111-1111-1111-1111-111111111111', 'Dr. Evelyn Martinez', 'c1c1c1c1-1111-1111-1111-111111111111', 'a1a1a1a1-1111-1111-1111-111111111111', 1),
+  ('f2222222-2222-2222-2222-222222222222', 'Dr. Evelyn Martinez', 'c1c1c1c1-1111-1111-1111-111111111111', 'b7b7b7b7-7777-7777-7777-777711111111', 1),
+  ('f3333333-3333-3333-3333-333333333333', 'Prof. Alan Turing', 'c1c1c1c1-1111-1111-1111-111111111111', 'b7b7b7b7-7777-7777-7777-777711111111', 1),
+  ('f4444444-4444-4444-4444-444422222222', 'Prof. Marcus Vance', 'c2c2c2c2-2222-2222-2222-222222222222', 'b4b4b4b4-4444-4444-4444-444411111111', 2),
+  ('f5555555-5555-5555-5555-555533333333', 'Prof. Marcus Vance', 'c2c2c2c2-2222-2222-2222-222222222222', 'b5b5b5b5-5555-5555-5555-555511111111', 2),
+  ('f6666666-6666-6666-6666-666633333333', 'Dr. Sarah Jenkins', 'c3c3c3c3-3333-3333-3333-333333333333', 'a3a3a3a3-3333-3333-3333-333333333333', 3)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Custom Questions (e is valid hex)
