@@ -521,7 +521,6 @@ input:checked + .slider:before {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Dedicated download exporter responsive card styling */
 .download-panel {
   display: flex;
   align-items: center;
@@ -532,6 +531,10 @@ input:checked + .slider:before {
   border: 1px solid var(--border-color);
   flex-wrap: wrap;
   flex-grow: 1;
+}
+.download-panel select,
+.download-panel button {
+  flex: 1;
 }
 
 @media (max-width: 640px) {
