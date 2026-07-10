@@ -73,6 +73,8 @@ export default function AdminDashboard() {
   // Forms states for Classes (Added Intake Year and Month)
   const [editingClass, setEditingClass] = useState(null);
   const [showLecturerSuggestions, setShowLecturerSuggestions] = useState(false);
+  const [showModuleDropdown, setShowModuleDropdown] = useState(false);
+  const [moduleSearchQuery, setModuleSearchQuery] = useState('');
   const [classSubjectId, setClassSubjectId] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
   const [newClassYear, setNewClassYear] = useState(new Date().getFullYear());
@@ -1343,30 +1345,138 @@ export default function AdminDashboard() {
                     )}
 
                     <form onSubmit={handleClassSubmit}>
-                      {/* Module Dropdown Selector */}
-                      <div className="form-group">
-                        <label className="form-label">Select Module / Subject</label>
-                        <select
-                          className="form-input btn-sm"
-                          value={classSubjectId}
-                          onChange={(e) => setClassSubjectId(e.target.value)}
-                        >
-                          <option value="">-- Choose Module --</option>
-                          {subjects
-                            .filter(s => {
-                              if (editingClass && editingClass.subjectId === s.id) return true;
-                              const activeList = activeSemesters[s.program] || [];
-                              return activeList.includes(s.semester);
-                            })
-                            .map(s => (
-                              <option key={s.id} value={s.id}>
-                                {s.name} ({s.code}) [Sem {s.semester} - {s.program === 'foundation' ? 'Foundation' : 'Degree'}]
-                              </option>
-                            ))
-                          }
-                        </select>
-                        <span className="form-input-hint">Selecting a module auto-populates Program, Year and Semester.</span>
-                      </div>
+                      {/* Searchable Module Dropdown Selector */}
+                      {(() => {
+                        const selectedSubjectObj = subjects.find(s => s.id === classSubjectId);
+                        
+                        // Active modules list
+                        const activeDropdownSubjects = subjects.filter(s => {
+                          if (editingClass && editingClass.subjectId === s.id) return true;
+                          const activeList = activeSemesters[s.program] || [];
+                          return activeList.includes(s.semester);
+                        });
+                        
+                        // Search filter
+                        const filteredDropdownSubjects = activeDropdownSubjects.filter(s => {
+                          const query = moduleSearchQuery.toLowerCase().trim();
+                          if (!query) return true;
+                          return s.name.toLowerCase().includes(query) || s.code.toLowerCase().includes(query);
+                        });
+                        
+                        return (
+                          <div className="form-group" style={{ position: 'relative' }}>
+                            <label className="form-label">Select Module / Subject</label>
+                            
+                            {/* Backdrop overlay to close when clicking outside */}
+                            {showModuleDropdown && (
+                              <div 
+                                style={{ position: 'fixed', inset: 0, zIndex: 998 }}
+                                onClick={() => { setShowModuleDropdown(false); setModuleSearchQuery(''); }}
+                              />
+                            )}
+
+                            <div 
+                              className="form-input btn-sm"
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                cursor: 'pointer',
+                                background: 'var(--bg-input)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-sm)',
+                                padding: '0.5rem 0.75rem',
+                                minHeight: '38px',
+                                userSelect: 'none',
+                                position: 'relative',
+                                zIndex: 999
+                              }}
+                              onClick={() => setShowModuleDropdown(!showModuleDropdown)}
+                            >
+                              <span style={{ color: selectedSubjectObj ? 'var(--text-primary)' : 'var(--text-muted)' }}>
+                                {selectedSubjectObj 
+                                  ? `${selectedSubjectObj.name} (${selectedSubjectObj.code}) [Sem ${selectedSubjectObj.semester} - ${selectedSubjectObj.program === 'foundation' ? 'Foundation' : 'Degree'}]`
+                                  : '-- Choose Module --'
+                                }
+                              </span>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>▼</span>
+                            </div>
+
+                            {showModuleDropdown && (
+                              <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                left: 0,
+                                right: 0,
+                                background: 'var(--bg-card)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-md)',
+                                boxShadow: 'var(--shadow-lg)',
+                                zIndex: 999,
+                                marginTop: '0.25rem',
+                                padding: '0.5rem',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
+                              }}>
+                                <input
+                                  type="text"
+                                  className="form-input btn-sm"
+                                  style={{ width: '100%', border: '1px solid var(--border-color)' }}
+                                  placeholder="Type subject name or code to search..."
+                                  value={moduleSearchQuery}
+                                  onChange={(e) => setModuleSearchQuery(e.target.value)}
+                                  autoFocus
+                                  onClick={(e) => e.stopPropagation()} // Prevent closing dropdown on search input click
+                                />
+                                
+                                <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                  {filteredDropdownSubjects.length > 0 ? (
+                                    filteredDropdownSubjects.map(s => (
+                                      <div
+                                        key={s.id}
+                                        onClick={() => {
+                                          setClassSubjectId(s.id);
+                                          setShowModuleDropdown(false);
+                                          setModuleSearchQuery('');
+                                        }}
+                                        style={{
+                                          padding: '0.5rem 0.75rem',
+                                          cursor: 'pointer',
+                                          fontSize: '0.85rem',
+                                          borderRadius: '4px',
+                                          background: classSubjectId === s.id ? 'var(--primary-glow)' : 'none',
+                                          color: classSubjectId === s.id ? 'var(--primary)' : 'var(--text-primary)',
+                                          transition: 'background 0.2s',
+                                          textAlign: 'left'
+                                        }}
+                                        onMouseOver={(e) => {
+                                          if (classSubjectId !== s.id) {
+                                            e.currentTarget.style.background = 'rgba(0,0,0,0.02)';
+                                          }
+                                        }}
+                                        onMouseOut={(e) => {
+                                          if (classSubjectId !== s.id) {
+                                            e.currentTarget.style.background = 'none';
+                                          }
+                                        }}
+                                      >
+                                        <strong>{s.code}</strong> - {s.name} <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>[Sem {s.semester} &bull; {s.program === 'foundation' ? 'Foundation' : 'Degree'}]</span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <div style={{ padding: '1rem', textAlign: 'center', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                      No modules match your query.
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            <span className="form-input-hint">Selecting a module auto-populates Program, Year and Semester.</span>
+                          </div>
+                        );
+                      })()}
 
                       <div className="form-group">
                         <label className="form-label">Class Code (e.g. S2A, S2B)</label>
