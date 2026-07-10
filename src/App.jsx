@@ -123,7 +123,7 @@ function AppContent() {
       display: 'flex', 
       flexDirection: 'column', 
       minHeight: '100vh',
-      maxWidth: '1400px',
+      maxWidth: '100%',
       width: '100%',
       margin: '0 auto',
       padding: '0 1.5rem'
