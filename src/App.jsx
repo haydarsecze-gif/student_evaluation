@@ -189,7 +189,7 @@ function AppContent() {
                   <input
                     type="password"
                     className={`form-input ${authError ? 'error' : ''}`}
-                    placeholder="Enter Password (default: admin123)"
+                    placeholder="Enter Password"
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     autoFocus
