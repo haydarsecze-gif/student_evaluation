@@ -61,6 +61,12 @@ export default function AdminDashboard() {
   const [summaryClassId, setSummaryClassId] = useState('');
   const [selectedSubId, setSelectedSubId] = useState(null);
 
+  // Grouped Class Feedback Summaries advanced filters
+  const [summarySubjectId, setSummarySubjectId] = useState('');
+  const [summaryYear, setSummaryYear] = useState('');
+  const [summaryMonth, setSummaryMonth] = useState('');
+  const [summarySectionCode, setSummarySectionCode] = useState('');
+
   // Detail Modal popup selection state
   const [selectedSubmissionForModal, setSelectedSubmissionForModal] = useState(null);
 
@@ -909,71 +915,131 @@ export default function AdminDashboard() {
               );
             })()
           ) : (
-            /* SUB-VIEW 2: GROUPED CLASS SUMMARIES (SEPARATED BY INDIVIDUAL SECTION CODES) */
+            /* SUB-VIEW 2: GROUPED CLASS SUMMARIES - MULTI-FILTER FEEDBACK DASHBOARD */
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {/* Advanced Filter Bar Panel */}
               <div className="glass-panel" style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  Review Grouped Feedback by Class Section
+                  Grouped Class Feedback Summaries
                 </h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Choose a specific individual class section below to view grouped student questionnaire answers.
+                  Filter survey questionnaire responses by module, intake month/year, and specific class sections.
                 </p>
 
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <select
-                    className="form-input"
-                    style={{ maxWidth: '500px', height: '40px' }}
-                    value={summaryClassId}
-                    onChange={(e) => setSummaryClassId(e.target.value)}
-                  >
-                    <option value="">-- Choose Class Section (e.g. S2A) --</option>
-                    {(() => {
-                      const options = [];
-                      classes.forEach(c => {
-                        const codes = c.code.split(',').map(x => x.trim()).filter(Boolean);
-                        const subjectObj = subjects.find(sub => sub.id === c.subjectId);
-                        const subjectName = subjectObj ? subjectObj.name : 'Unknown Module';
-                        codes.forEach(code => {
-                          options.push({
-                            id: `${c.id}::${code}`,
-                            label: `${code} - ${subjectName} [Intake: ${c.month} ${c.year}]`
-                          });
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  {/* Filter 1: Subject / Module */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>MODULE / SUBJECT</span>
+                    <select
+                      className="form-input"
+                      value={summarySubjectId}
+                      onChange={(e) => {
+                        setSummarySubjectId(e.target.value);
+                        setSummarySectionCode(''); // Reset section code to avoid mismatched filters
+                      }}
+                    >
+                      <option value="">All Subjects / Modules</option>
+                      {subjects.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.code})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter 2: Intake Year */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>INTAKE YEAR</span>
+                    <select
+                      className="form-input"
+                      value={summaryYear}
+                      onChange={(e) => {
+                        setSummaryYear(e.target.value);
+                        setSummarySectionCode('');
+                      }}
+                    >
+                      <option value="">All Years</option>
+                      {uniqueYears.map(yr => (
+                        <option key={yr} value={yr}>{yr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter 3: Intake Month */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>INTAKE MONTH</span>
+                    <select
+                      className="form-input"
+                      value={summaryMonth}
+                      onChange={(e) => {
+                        setSummaryMonth(e.target.value);
+                        setSummarySectionCode('');
+                      }}
+                    >
+                      <option value="">All Months</option>
+                      {uniqueMonths.map(m => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter 4: Specific Class Section Code */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>CLASS CODE (S2A / S2B)</span>
+                    <select
+                      className="form-input"
+                      value={summarySectionCode}
+                      onChange={(e) => setSummarySectionCode(e.target.value)}
+                    >
+                      <option value="">All Class Sections</option>
+                      {(() => {
+                        // Dynamically list class codes based on other matches
+                        const codes = new Set();
+                        classes.forEach(c => {
+                          const matchesSubject = summarySubjectId ? c.subjectId === summarySubjectId : true;
+                          const matchesYear = summaryYear ? c.year === parseInt(summaryYear, 10) : true;
+                          const matchesMonth = summaryMonth ? c.month === summaryMonth : true;
+                          
+                          if (matchesSubject && matchesYear && matchesMonth) {
+                            c.code.split(',').map(x => x.trim()).filter(Boolean).forEach(code => {
+                              codes.add(code);
+                            });
+                          }
                         });
-                      });
-                      options.sort((a, b) => a.label.localeCompare(b.label));
-                      return options.map(opt => (
-                        <option key={opt.id} value={opt.id}>
-                          {opt.label}
-                        </option>
-                      ));
-                    })()}
-                  </select>
+                        return Array.from(codes).sort().map(code => (
+                          <option key={code} value={code}>{code}</option>
+                        ));
+                      })()}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {(() => {
-                if (!summaryClassId) {
+                // Filter submissions dynamically
+                const classSubmissions = submissions.filter(s => {
+                  const classObj = classes.find(c => c.id === s.classId);
+                  
+                  const matchesSubject = summarySubjectId ? s.subjectId === summarySubjectId : true;
+                  const matchesYear = summaryYear ? (classObj && classObj.year === parseInt(summaryYear, 10)) : true;
+                  const matchesMonth = summaryMonth ? (classObj && classObj.month === summaryMonth) : true;
+                  
+                  // For specific class code matches
+                  const specificCode = s.class_code || (classObj ? classObj.code.split(',').map(x => x.trim())[0] : '');
+                  const matchesSection = summarySectionCode ? specificCode === summarySectionCode : true;
+
+                  return matchesSubject && matchesYear && matchesMonth && matchesSection;
+                });
+
+                if (classSubmissions.length === 0) {
                   return (
                     <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Class Section Selected</div>
+                      <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Submissions Found</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                        Please select a specific class section from the dropdown list above to view feedback.
+                        No evaluation feedback records match your chosen filter parameters.
                       </div>
                     </div>
                   );
                 }
-
-                const [classId, sectionCode] = summaryClassId.split('::');
-                const selectedClass = classes.find(c => c.id === classId);
-                if (!selectedClass) return null;
-
-                const subjectObj = subjects.find(sub => sub.id === selectedClass.subjectId);
-                
-                // Filter submissions belonging to this class ID and matching the specific class section code
-                const classSubmissions = submissions.filter(s => {
-                  return s.classId === selectedClass.id && 
-                    (s.class_code === sectionCode || (!s.class_code && selectedClass.code.split(',').map(x => x.trim())[0] === sectionCode));
-                });
 
                 // Calculate class average score
                 const scores = classSubmissions.map(s => s.score);
@@ -992,27 +1058,35 @@ export default function AdminDashboard() {
                   else if (gradeObj.letter === 'Hate') sentimentCount.Hate++;
                 });
 
+                // Find metadata strings
+                const selectedSubject = subjects.find(sub => sub.id === summarySubjectId);
+                const moduleName = selectedSubject ? `${selectedSubject.name} (${selectedSubject.code})` : 'All Modules Combined';
+                const intakeString = (summaryMonth || summaryYear) 
+                  ? `${summaryMonth || ''} ${summaryYear || ''}`.trim() 
+                  : 'All Intakes Combined';
+                const sectionString = summarySectionCode || 'All Class Sections Combined';
+
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     
-                    {/* Class metadata dashboard summary card */}
+                    {/* Aggregated Metadata Dashboard Summary Card */}
                     <div className="glass-panel" style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', background: 'rgba(0,0,0,0.01)' }}>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CLASS SECTION</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CLASS SECTION(S)</span>
                         <span style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>
-                          {sectionCode}
+                          {sectionString}
                         </span>
                       </div>
                       <div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>SUBJECT MODULE</span>
                         <span style={{ fontSize: '0.95rem', fontWeight: 600 }}>
-                          {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'N/A'}
+                          {moduleName}
                         </span>
                       </div>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>INTAKE &amp; TERM</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>INTAKE BATCH</span>
                         <span style={{ fontSize: '0.95rem', fontWeight: 500 }}>
-                          {selectedClass.month} {selectedClass.year} &bull; Sem {selectedClass.semester}
+                          {intakeString}
                         </span>
                       </div>
                       <div>
@@ -1047,14 +1121,15 @@ export default function AdminDashboard() {
                       </h3>
 
                       {customQuestions.map(q => {
-                        // Gather answers from this class's submissions
+                        // Gather answers from these filtered submissions
                         const answers = classSubmissions.map(s => {
                           const val = s.customAnswers ? s.customAnswers[q.id] : null;
+                          const classObj = classes.find(c => c.id === s.classId);
                           return {
                             studentName: s.name,
                             studentEmail: s.email,
                             score: s.score,
-                            classCode: s.class_code || sectionCode,
+                            classCode: s.class_code || (classObj ? classObj.code.split(',').map(x => x.trim())[0] : 'Unknown'),
                             lecturer: s.lecturer,
                             value: val
                           };
@@ -1103,7 +1178,7 @@ export default function AdminDashboard() {
                                     marginTop: '0.25rem'
                                   }}>
                                     <div>
-                                      Evaluated Teacher: <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{ans.lecturer}</span>
+                                      Class Section: <span style={{ fontWeight: 600, color: 'var(--secondary)', fontFamily: 'var(--font-mono)' }}>{ans.classCode}</span> &bull; Teacher: <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{ans.lecturer}</span>
                                     </div>
                                     <div style={{ fontWeight: 500 }}>
                                       — Submitted by: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{ans.studentName}</span> ({ans.studentEmail}) &bull; Score: <span style={{ fontWeight: 700 }}>{ans.score}%</span>
@@ -1113,7 +1188,7 @@ export default function AdminDashboard() {
                               ))}
                               {answers.length === 0 && (
                                 <span style={{ fontStyle: 'italic', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'center', padding: '2rem' }}>
-                                  No student responses logged for this questionnaire input in this class section yet.
+                                  No student responses logged for this questionnaire input matching the chosen parameters.
                                 </span>
                               )}
                             </div>
