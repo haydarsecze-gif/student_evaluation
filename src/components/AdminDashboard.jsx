@@ -936,11 +936,18 @@ export default function AdminDashboard() {
                           onChange={(e) => setClassSubjectId(e.target.value)}
                         >
                           <option value="">-- Choose Module --</option>
-                          {subjects.map(s => (
-                            <option key={s.id} value={s.id}>
-                              {s.name} ({s.code}) [Sem {s.semester} - {s.program === 'foundation' ? 'Foundation' : 'Degree'}]
-                            </option>
-                          ))}
+                          {subjects
+                            .filter(s => {
+                              if (editingClass && editingClass.subjectId === s.id) return true;
+                              const activeList = activeSemesters[s.program] || [];
+                              return activeList.includes(s.semester);
+                            })
+                            .map(s => (
+                              <option key={s.id} value={s.id}>
+                                {s.name} ({s.code}) [Sem {s.semester} - {s.program === 'foundation' ? 'Foundation' : 'Degree'}]
+                              </option>
+                            ))
+                          }
                         </select>
                         <span className="form-input-hint">Selecting a module auto-populates Program, Year and Semester.</span>
                       </div>
