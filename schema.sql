@@ -63,7 +63,8 @@ CREATE TABLE submissions (
   class_id UUID REFERENCES classes(id) ON DELETE CASCADE,
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
   score INTEGER NOT NULL CHECK (score >= 0 AND score <= 100),
-  lecturer TEXT NOT NULL, -- Keep lecturer as text list for historical submission logs
+  lecturer TEXT NOT NULL, -- Specific lecturer evaluated
+  class_code TEXT, -- Specific class section code evaluated (e.g. "S2A")
   timestamp TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   custom_answers JSONB NOT NULL DEFAULT '{}'::jsonb
 );

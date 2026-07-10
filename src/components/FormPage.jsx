@@ -19,6 +19,8 @@ export default function FormPage() {
   const [program, setProgram] = useState(''); // 'foundation' | 'degree'
   const [semester, setSemester] = useState('');
   const [classId, setClassId] = useState('');
+  const [selectedClassCode, setSelectedClassCode] = useState('');
+  const [selectedLecturer, setSelectedLecturer] = useState('');
   const [score, setScore] = useState(80);
 
   // Custom Questions Answers State
@@ -38,6 +40,12 @@ export default function FormPage() {
   useEffect(() => {
     setClassId('');
   }, [semester]);
+
+  // Reset chosen code and lecturer when classId changes
+  useEffect(() => {
+    setSelectedClassCode('');
+    setSelectedLecturer('');
+  }, [classId]);
 
   // Filter classes matching the selected semester and program
   const availableClasses = classes.filter(c => {
@@ -102,7 +110,12 @@ export default function FormPage() {
 
     if (!program) tempErrors.program = 'Please select a program';
     if (!semester) tempErrors.semester = 'Please select a semester';
-    if (!classId) tempErrors.classId = 'Please select your Class / Module section';
+    if (!classId) {
+      tempErrors.classId = 'Please select your Module / Subject';
+    } else {
+      if (!selectedClassCode) tempErrors.selectedClassCode = 'Please select your Class Section Code';
+      if (!selectedLecturer) tempErrors.selectedLecturer = 'Please select your Lecturer';
+    }
 
     // Validate Dynamic Custom Questions
     customQuestions.forEach(q => {
@@ -132,14 +145,6 @@ export default function FormPage() {
     const selectedClass = classes.find(c => c.id === classId);
     if (!selectedClass) return;
 
-    // Retrieve names for all linked lecturers
-    const classLecturers = (selectedClass.lecturerIds || [])
-      .map(id => lecturers.find(l => l.id === id))
-      .filter(Boolean);
-    const lecturerName = classLecturers.length > 0
-      ? classLecturers.map(l => l.name).join(', ')
-      : 'Unknown Lecturer';
-
     // Add submission with basic fields + custom answers
     addSubmission({
       name,
@@ -150,7 +155,8 @@ export default function FormPage() {
       classId,
       subjectId: selectedClass.subjectId,
       score: parseInt(score, 10),
-      lecturer: lecturerName,
+      lecturer: selectedLecturer,
+      class_code: selectedClassCode,
       customAnswers
     });
 
@@ -161,6 +167,8 @@ export default function FormPage() {
     setProgram('');
     setSemester('');
     setClassId('');
+    setSelectedClassCode('');
+    setSelectedLecturer('');
     setScore(80);
     setCustomAnswers({});
     setErrors({});
@@ -340,10 +348,10 @@ export default function FormPage() {
               )}
             </div>
 
-            {/* Combined Class Section Select */}
+            {/* 1. Select Module / Subject */}
             <div className="form-group">
               <label className="form-label">
-                Class Code &amp; Module Section <span className="required">*</span>
+                Module / Subject <span className="required">*</span>
               </label>
               <div className="select-wrapper">
                 <select
@@ -354,23 +362,14 @@ export default function FormPage() {
                   style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                 >
                   <option value="">
-                    {!semester ? 'Select Semester first' : 'Select Class / Module Section'}
+                    {!semester ? 'Select Semester first' : 'Select Module / Subject'}
                   </option>
                   {availableClasses.map(c => {
                     const subjectObj = subjects.find(s => s.id === c.subjectId);
-                    
-                    // Retrieve names for all linked lecturers
-                    const classLecturers = (c.lecturerIds || [])
-                      .map(id => lecturers.find(l => l.id === id))
-                      .filter(Boolean);
-                    const lecturerDisplay = classLecturers.length > 0
-                      ? classLecturers.map(l => l.name).join(', ')
-                      : 'Unknown Lecturer';
-
                     const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
                     return (
                       <option key={c.id} value={c.id}>
-                        {subjectDisplay} [Class: {c.code} - {c.month} {c.year}] - {lecturerDisplay}
+                        {subjectDisplay} [Intake: {c.month} {c.year}]
                       </option>
                     );
                   })}
@@ -378,6 +377,63 @@ export default function FormPage() {
               </div>
               {errors.classId && <span className="form-input-error-msg">{errors.classId}</span>}
             </div>
+
+            {/* Render class-specific selectors once classId is chosen */}
+            {classId && (
+              <>
+                {/* 2. Select Specific Class Code */}
+                <div className="form-group animate-fade-in">
+                  <label className="form-label">
+                    Class Section Code <span className="required">*</span>
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      className={`form-input ${errors.selectedClassCode ? 'error' : ''}`}
+                      value={selectedClassCode}
+                      onChange={(e) => setSelectedClassCode(e.target.value)}
+                    >
+                      <option value="">-- Choose Class Code (e.g. S2A) --</option>
+                      {(() => {
+                        const classObj = classes.find(c => c.id === classId);
+                        if (!classObj) return null;
+                        const codes = classObj.code.split(',').map(c => c.trim()).filter(Boolean);
+                        return codes.map(c => (
+                          <option key={c} value={c}>{c}</option>
+                        ));
+                      })()}
+                    </select>
+                  </div>
+                  {errors.selectedClassCode && <span className="form-input-error-msg">{errors.selectedClassCode}</span>}
+                </div>
+
+                {/* 3. Select Specific Lecturer */}
+                <div className="form-group animate-fade-in">
+                  <label className="form-label">
+                    Assigned Lecturer / Instructor <span className="required">*</span>
+                  </label>
+                  <div className="select-wrapper">
+                    <select
+                      className={`form-input ${errors.selectedLecturer ? 'error' : ''}`}
+                      value={selectedLecturer}
+                      onChange={(e) => setSelectedLecturer(e.target.value)}
+                    >
+                      <option value="">-- Choose Lecturer to Evaluate --</option>
+                      {(() => {
+                        const classObj = classes.find(c => c.id === classId);
+                        if (!classObj) return null;
+                        const classLecturers = (classObj.lecturerIds || [])
+                          .map(id => lecturers.find(l => l.id === id))
+                          .filter(Boolean);
+                        return classLecturers.map(l => (
+                          <option key={l.id} value={l.name}>{l.name}</option>
+                        ));
+                      })()}
+                    </select>
+                  </div>
+                  {errors.selectedLecturer && <span className="form-input-error-msg">{errors.selectedLecturer}</span>}
+                </div>
+              </>
+            )}
 
             {/* Performance (Slider) */}
             <div className="form-group" style={{ marginTop: '1.5rem' }}>

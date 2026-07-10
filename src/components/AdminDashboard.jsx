@@ -140,7 +140,7 @@ export default function AdminDashboard() {
           "Phone": s.phone,
           "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
           "Semester": `Semester ${s.semester}`,
-          "Class Code": cls.code,
+          "Class Code": s.class_code || cls.code,
           "Intake Month": cls.month,
           "Intake Year": cls.year,
           "Module Code": subjectObj ? subjectObj.code : 'N/A',
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                             </td>
                             <td>
                               <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                                Class: {classObj ? `${classObj.code} (${classObj.month} ${classObj.year})` : 'Unknown Class'}
+                                Class: {s.class_code || (classObj ? classObj.code : 'Unknown Class')} {classObj ? `(${classObj.month} ${classObj.year})` : ''}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                 {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Subject'} &bull; Sem {s.semester} ({s.program})

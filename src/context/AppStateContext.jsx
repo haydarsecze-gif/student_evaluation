@@ -400,6 +400,7 @@ export const AppStateProvider = ({ children }) => {
         subject_id: subm.subjectId,
         score: subm.score,
         lecturer: subm.lecturer,
+        class_code: subm.class_code, // Store specific class section evaluated
         custom_answers: subm.customAnswers || {}
       };
 
