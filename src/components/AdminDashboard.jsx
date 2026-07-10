@@ -48,6 +48,8 @@ export default function AdminDashboard() {
   const [filterClass, setFilterClass] = useState('');
   const [filterSemester, setFilterSemester] = useState('');
   const [filterProgram, setFilterProgram] = useState(''); // '' | 'foundation' | 'degree'
+  const [filterYear, setFilterYear] = useState('');
+  const [filterMonth, setFilterMonth] = useState('');
 
   // Row expansion state for custom answers
   const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
@@ -103,18 +105,20 @@ export default function AdminDashboard() {
     return { letter: 'Hate', class: 'badge-danger' };
   };
 
-  // Excel exporter with custom question columns (Filtered dynamically by active Semester and Program UI filters)
+  // Excel exporter with custom question columns (Filtered dynamically by active Semester, Program, Year, and Month UI filters)
   const handleExportExcel = () => {
-    // Filter classes based on active UI filters (Semester and Program)
+    // Filter classes based on active UI filters (Semester, Program, Year, Month)
     const filteredClasses = classes.filter(c => {
       const matchesSemester = filterSemester ? c.semester === parseInt(filterSemester, 10) : true;
       const subjectObj = subjects.find(s => s.id === c.subjectId);
       const matchesProgram = filterProgram ? (subjectObj ? subjectObj.program === filterProgram : false) : true;
-      return matchesSemester && matchesProgram;
+      const matchesYear = filterYear ? c.year === parseInt(filterYear, 10) : true;
+      const matchesMonth = filterMonth ? c.month === filterMonth : true;
+      return matchesSemester && matchesProgram && matchesYear && matchesMonth;
     });
 
     if (filteredClasses.length === 0) {
-      showAlert("No classes match the current active semester / program filters.", "Export Error");
+      showAlert("No classes match the current active filter settings.", "Export Error");
       return;
     }
 
@@ -185,7 +189,10 @@ export default function AdminDashboard() {
       XLSX.utils.book_append_sheet(wb, ws, cleanName || `Class_${cls.id}`);
     });
 
-    const filterSuffix = filterSemester ? `_Semester_${filterSemester}` : '';
+    let filterSuffix = '';
+    if (filterSemester) filterSuffix += `_Semester_${filterSemester}`;
+    if (filterYear) filterSuffix += `_Year_${filterYear}`;
+    if (filterMonth) filterSuffix += `_${filterMonth}`;
     XLSX.writeFile(wb, `Student_Evaluation_Data${filterSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
@@ -392,6 +399,10 @@ export default function AdminDashboard() {
     setCrudError('');
   };
 
+  // Derive unique years and months from classes to populate logs filters
+  const uniqueYears = Array.from(new Set(classes.map(c => c.year))).sort((a, b) => b - a);
+  const uniqueMonths = Array.from(new Set(classes.map(c => c.month))).sort();
+
   // Filter Submissions
   const filteredSubmissions = submissions.filter(s => {
     const matchesSearch = 
@@ -402,7 +413,12 @@ export default function AdminDashboard() {
     const matchesSemester = filterSemester ? s.semester === parseInt(filterSemester, 10) : true;
     const matchesProgram = filterProgram ? s.program === filterProgram : true;
 
-    return matchesSearch && matchesClass && matchesSemester && matchesProgram;
+    // Lookup the class object for this submission to check year/month
+    const classObj = classes.find(c => c.id === s.classId);
+    const matchesYear = filterYear ? (classObj ? classObj.year === parseInt(filterYear, 10) : false) : true;
+    const matchesMonth = filterMonth ? (classObj ? classObj.month === filterMonth : false) : true;
+
+    return matchesSearch && matchesClass && matchesSemester && matchesProgram && matchesYear && matchesMonth;
   });
 
   // Calculate Metrics
@@ -480,7 +496,7 @@ export default function AdminDashboard() {
               Export Multi-Tab Excel
             </button>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {filterSemester || filterProgram ? '⚠️ Exports only matching semester filters' : 'Exports all configured classes'}
+              {filterSemester || filterProgram || filterYear || filterMonth ? '⚠️ Exports only matching filters' : 'Exports all configured classes'}
             </span>
           </div>
         </div>
@@ -529,13 +545,13 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <select className="form-input" style={{ width: '180px' }} value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
+                <select className="form-input" style={{ width: '150px' }} value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
                   <option value="">All Programs</option>
                   <option value="foundation">Foundation</option>
                   <option value="degree">Degree</option>
                 </select>
 
-                <select className="form-input" style={{ width: '150px' }} value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
+                <select className="form-input" style={{ width: '130px' }} value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
                   <option value="">All Semesters</option>
                   <option value="1">Semester 1</option>
                   <option value="2">Semester 2</option>
@@ -545,7 +561,23 @@ export default function AdminDashboard() {
                   <option value="6">Semester 6</option>
                 </select>
 
-                <select className="form-input" style={{ width: '180px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
+                {/* Intake Year filter */}
+                <select className="form-input" style={{ width: '120px' }} value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                  <option value="">All Years</option>
+                  {uniqueYears.map(yr => (
+                    <option key={yr} value={yr}>{yr}</option>
+                  ))}
+                </select>
+
+                {/* Intake Month filter */}
+                <select className="form-input" style={{ width: '120px' }} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                  <option value="">All Months</option>
+                  {uniqueMonths.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+
+                <select className="form-input" style={{ width: '150px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
                   <option value="">All Classes</option>
                   {classes.map(c => (
                     <option key={c.id} value={c.id}>{c.code} ({c.month} {c.year})</option>
@@ -962,7 +994,7 @@ export default function AdminDashboard() {
                         <th>Subject Name</th>
                         <th>Semester Cycle</th>
                         <th>Program</th>
-                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
+                        <th style={{ textalign: 'center', width: '180px' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
