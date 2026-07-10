@@ -72,6 +72,7 @@ export default function AdminDashboard() {
 
   // Forms states for Classes (Added Intake Year and Month)
   const [editingClass, setEditingClass] = useState(null);
+  const [showLecturerSuggestions, setShowLecturerSuggestions] = useState(false);
   const [classSubjectId, setClassSubjectId] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
   const [newClassYear, setNewClassYear] = useState(new Date().getFullYear());
@@ -1414,22 +1415,92 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      {/* Autocomplete Lecturer input box utilizing browser native datalist */}
-                      <div className="form-group">
+                      {/* Autocomplete Lecturer input box utilizing custom multi-value suggestion dropdown */}
+                      <div className="form-group" style={{ position: 'relative' }}>
                         <label className="form-label">Assigned Lecturer(s)</label>
                         <input
                           type="text"
-                          list="lecturer-suggestions"
                           className="form-input btn-sm"
                           placeholder="Separate multiple names with commas..."
                           value={newClassLecturer}
-                          onChange={(e) => setNewClassLecturer(e.target.value)}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewClassLecturer(val);
+                            // Only trigger suggestions list if user is typing a word segment
+                            const lastSegment = val.split(',').pop() || '';
+                            if (lastSegment.trim().length > 0) {
+                              setShowLecturerSuggestions(true);
+                            } else {
+                              setShowLecturerSuggestions(false);
+                            }
+                          }}
+                          onFocus={() => {
+                            const lastSegment = newClassLecturer.split(',').pop() || '';
+                            if (lastSegment.trim().length > 0) {
+                              setShowLecturerSuggestions(true);
+                            }
+                          }}
+                          onBlur={() => {
+                            // Delay dismissal slightly to allow clicks to register on the dropdown options list
+                            setTimeout(() => setShowLecturerSuggestions(false), 200);
+                          }}
                         />
-                        <datalist id="lecturer-suggestions">
-                          {lecturers.map(l => (
-                            <option key={l.id} value={l.name} />
-                          ))}
-                        </datalist>
+                        {showLecturerSuggestions && (() => {
+                          const lastSegment = (newClassLecturer.split(',').pop() || '').trim().toLowerCase();
+                          const lowerVal = newClassLecturer.toLowerCase();
+                          const matching = lastSegment 
+                            ? lecturers.filter(l => 
+                                l.name.toLowerCase().includes(lastSegment) && 
+                                !lowerVal.includes(l.name.toLowerCase().trim())
+                              )
+                            : [];
+                          
+                          if (matching.length === 0) return null;
+
+                          return (
+                            <div style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              background: 'var(--bg-card)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: 'var(--radius-md)',
+                              boxShadow: 'var(--shadow-lg)',
+                              zIndex: 999,
+                              maxHeight: '180px',
+                              overflowY: 'auto',
+                              marginTop: '0.25rem'
+                            }}>
+                              {matching.map(l => (
+                                <div
+                                  key={l.id}
+                                  onClick={() => {
+                                    const parts = newClassLecturer.split(',');
+                                    // Replace last segment with the lecturer's name
+                                    parts[parts.length - 1] = ` ${l.name}`;
+                                    // Re-join with commas, append a trailing comma/space for next input helper
+                                    setNewClassLecturer(parts.join(', ').replace(/^\s*,\s*/, '').trim() + ', ');
+                                    setShowLecturerSuggestions(false);
+                                  }}
+                                  style={{
+                                    padding: '0.6rem 1rem',
+                                    cursor: 'pointer',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-primary)',
+                                    borderBottom: '1px solid var(--border-color)',
+                                    transition: 'background 0.2s',
+                                    textAlign: 'left'
+                                  }}
+                                  onMouseOver={(e) => e.target.style.background = 'rgba(219, 39, 119, 0.05)'}
+                                  onMouseOut={(e) => e.target.style.background = 'none'}
+                                >
+                                  {l.name}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })()}
                         <span className="form-input-hint">For 2-3 lecturers, type their names separated by commas (e.g., Dr. Evelyn, Prof. Turing).</span>
                       </div>
 
