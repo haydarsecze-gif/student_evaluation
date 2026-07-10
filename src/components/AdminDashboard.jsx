@@ -51,6 +51,11 @@ export default function AdminDashboard() {
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
 
+  // Dedicated Excel Exporter Download Filter states
+  const [downloadSemester, setDownloadSemester] = useState('');
+  const [downloadMonth, setDownloadMonth] = useState('');
+  const [downloadYear, setDownloadYear] = useState('');
+
   // Row expansion state for custom answers
   const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
 
@@ -105,20 +110,18 @@ export default function AdminDashboard() {
     return { letter: 'Hate', class: 'badge-danger' };
   };
 
-  // Excel exporter with custom question columns (Filtered dynamically by active Semester, Program, Year, and Month UI filters)
+  // Excel exporter with custom question columns (Filtered dynamically by dedicated download filters)
   const handleExportExcel = () => {
-    // Filter classes based on active UI filters (Semester, Program, Year, Month)
+    // Filter classes based on active download filters (Semester, Year, Month)
     const filteredClasses = classes.filter(c => {
-      const matchesSemester = filterSemester ? c.semester === parseInt(filterSemester, 10) : true;
-      const subjectObj = subjects.find(s => s.id === c.subjectId);
-      const matchesProgram = filterProgram ? (subjectObj ? subjectObj.program === filterProgram : false) : true;
-      const matchesYear = filterYear ? c.year === parseInt(filterYear, 10) : true;
-      const matchesMonth = filterMonth ? c.month === filterMonth : true;
-      return matchesSemester && matchesProgram && matchesYear && matchesMonth;
+      const matchesSemester = downloadSemester ? c.semester === parseInt(downloadSemester, 10) : true;
+      const matchesYear = downloadYear ? c.year === parseInt(downloadYear, 10) : true;
+      const matchesMonth = downloadMonth ? c.month === downloadMonth : true;
+      return matchesSemester && matchesYear && matchesMonth;
     });
 
     if (filteredClasses.length === 0) {
-      showAlert("No classes match the current active filter settings.", "Export Error");
+      showAlert("No classes match the chosen download filters.", "Export Error");
       return;
     }
 
@@ -190,9 +193,9 @@ export default function AdminDashboard() {
     });
 
     let filterSuffix = '';
-    if (filterSemester) filterSuffix += `_Semester_${filterSemester}`;
-    if (filterYear) filterSuffix += `_Year_${filterYear}`;
-    if (filterMonth) filterSuffix += `_${filterMonth}`;
+    if (downloadSemester) filterSuffix += `_Semester_${downloadSemester}`;
+    if (downloadYear) filterSuffix += `_Year_${downloadYear}`;
+    if (downloadMonth) filterSuffix += `_${downloadMonth}`;
     XLSX.writeFile(wb, `Student_Evaluation_Data${filterSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
@@ -460,7 +463,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           {/* Form availability switch */}
           <div style={{
             display: 'flex',
@@ -472,7 +475,7 @@ export default function AdminDashboard() {
             border: '1px solid var(--border-color)'
           }}>
             <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Evaluation Intake Portal:
+              Portal:
             </span>
             <label className="switch">
               <input 
@@ -487,18 +490,85 @@ export default function AdminDashboard() {
               fontWeight: 'bold', 
               color: formActive ? 'var(--success)' : 'var(--danger)'
             }}>
-              {formActive ? 'ONLINE' : 'OFFLINE'}
+              {formActive ? 'ON' : 'OFF'}
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-end' }}>
-            <button onClick={handleExportExcel} className="btn btn-primary" style={{ gap: '0.5rem' }}>
-              Export Multi-Tab Excel
-            </button>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-              {filterSemester || filterProgram || filterYear || filterMonth ? '⚠️ Exports only matching filters' : 'Exports all configured classes'}
+          {/* Dedicated Download Exporter Options Panel */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
+            background: 'rgba(255,255,255,0.03)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)',
+            flexWrap: 'wrap'
+          }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
+              Excel Exporter Intake:
             </span>
+
+            {/* Semester Select */}
+            <select
+              className="form-input btn-sm"
+              style={{ width: '120px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              value={downloadSemester}
+              onChange={(e) => setDownloadSemester(e.target.value)}
+            >
+              <option value="">All Semesters</option>
+              <option value="1">Semester 1</option>
+              <option value="2">Semester 2</option>
+              <option value="3">Semester 3</option>
+              <option value="4">Semester 4</option>
+              <option value="5">Semester 5</option>
+              <option value="6">Semester 6</option>
+            </select>
+
+            {/* Month Select */}
+            <select
+              className="form-input btn-sm"
+              style={{ width: '100px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              value={downloadMonth}
+              onChange={(e) => setDownloadMonth(e.target.value)}
+            >
+              <option value="">All Months</option>
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October">October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
+
+            {/* Year Select */}
+            <select
+              className="form-input btn-sm"
+              style={{ width: '90px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              value={downloadYear}
+              onChange={(e) => setDownloadYear(e.target.value)}
+            >
+              <option value="">All Years</option>
+              {uniqueYears.map(yr => (
+                <option key={yr} value={yr}>{yr}</option>
+              ))}
+            </select>
+
+            <button 
+              onClick={handleExportExcel} 
+              className="btn btn-primary btn-sm" 
+              style={{ height: '28px', padding: '0 0.75rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center' }}
+            >
+              Export Excel
+            </button>
           </div>
+
         </div>
       </div>
 
@@ -994,7 +1064,7 @@ export default function AdminDashboard() {
                         <th>Subject Name</th>
                         <th>Semester Cycle</th>
                         <th>Program</th>
-                        <th style={{ textalign: 'center', width: '180px' }}>Actions</th>
+                        <th style={{ textAlign: 'center', width: '180px' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
