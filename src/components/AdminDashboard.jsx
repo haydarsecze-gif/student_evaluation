@@ -1719,7 +1719,12 @@ export default function AdminDashboard() {
                             <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
                             <td>
                               {lClasses.length > 0 ? (
-                                lClasses.map(c => `${c.code}`).join(', ')
+                                lClasses.map(c => {
+                                  const subjectObj = subjects.find(sub => sub.id === c.subjectId);
+                                  const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
+                                  const codeDisplay = c.code ? ` [Class: ${c.code}]` : ' [No Class Code]';
+                                  return `${subjectDisplay}${codeDisplay}`;
+                                }).join('; ')
                               ) : (
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No active classes</span>
                               )}
