@@ -18,13 +18,15 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   return (
     <nav className="glass-panel" style={{
-      margin: '1rem 0 0',
+      position: 'sticky',
+      top: '0.75rem',
+      margin: '0.75rem 0 0',
       borderRadius: 'var(--radius-md)',
       padding: '0.75rem 1.5rem',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      zIndex: 10
+      zIndex: 1000
     }}>
       {/* Brand logo (No icons, no gradients) */}
       <div style={{ display: 'flex', alignItems: 'center' }}>

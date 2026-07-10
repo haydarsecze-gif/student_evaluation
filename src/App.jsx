@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppStateProvider, useAppState } from './context/AppStateContext';
 import Navbar from './components/Navbar';
 import FormPage from './components/FormPage';
@@ -10,6 +10,26 @@ function AppContent() {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [shakeCard, setShakeCard] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
 
   const { loading, fetchError, adminPassword, dialog } = useAppState();
 
@@ -261,6 +281,33 @@ function AppContent() {
             </div>
           </div>
         </div>
+      )}
+      {showScrollTop && (
+        <button
+          onClick={scrollToTop}
+          className="btn btn-primary animate-fade-in"
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            right: '2.5rem',
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: 'var(--shadow-lg)',
+            zIndex: 9999,
+            padding: 0,
+            fontSize: '1rem',
+            border: 'none',
+            cursor: 'pointer',
+            transition: 'all 0.25s ease'
+          }}
+          title="Back to Top"
+        >
+          ▲
+        </button>
       )}
     </div>
   );
