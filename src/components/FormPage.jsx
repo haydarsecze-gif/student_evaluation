@@ -113,7 +113,11 @@ export default function FormPage() {
     if (!classId) {
       tempErrors.classId = 'Please select your Module / Subject';
     } else {
-      if (!selectedClassCode) tempErrors.selectedClassCode = 'Please select your Class Section Code';
+      const selectedClass = classes.find(c => c.id === classId);
+      const codes = selectedClass && selectedClass.code ? selectedClass.code.split(',').map(c => c.trim()).filter(Boolean) : [];
+      if (codes.length > 0 && !selectedClassCode) {
+        tempErrors.selectedClassCode = 'Please select your Class Section Code';
+      }
       if (!selectedLecturer) tempErrors.selectedLecturer = 'Please select your Lecturer';
     }
 
@@ -381,30 +385,34 @@ export default function FormPage() {
             {/* Render class-specific selectors once classId is chosen */}
             {classId && (
               <>
-                {/* 2. Select Specific Class Code */}
-                <div className="form-group animate-fade-in">
-                  <label className="form-label">
-                    Class Section Code <span className="required">*</span>
-                  </label>
-                  <div className="select-wrapper">
-                    <select
-                      className={`form-input ${errors.selectedClassCode ? 'error' : ''}`}
-                      value={selectedClassCode}
-                      onChange={(e) => setSelectedClassCode(e.target.value)}
-                    >
-                      <option value="">-- Choose Class Code (e.g. S2A) --</option>
-                      {(() => {
-                        const classObj = classes.find(c => c.id === classId);
-                        if (!classObj) return null;
-                        const codes = classObj.code.split(',').map(c => c.trim()).filter(Boolean);
-                        return codes.map(c => (
-                          <option key={c} value={c}>{c}</option>
-                        ));
-                      })()}
-                    </select>
-                  </div>
-                  {errors.selectedClassCode && <span className="form-input-error-msg">{errors.selectedClassCode}</span>}
-                </div>
+                {/* 2. Select Specific Class Code (Only if class has codes configured) */}
+                {(() => {
+                  const classObj = classes.find(c => c.id === classId);
+                  if (!classObj) return null;
+                  const codes = classObj.code ? classObj.code.split(',').map(c => c.trim()).filter(Boolean) : [];
+                  if (codes.length === 0) return null;
+
+                  return (
+                    <div className="form-group animate-fade-in">
+                      <label className="form-label">
+                        Class Section Code <span className="required">*</span>
+                      </label>
+                      <div className="select-wrapper">
+                        <select
+                          className={`form-input ${errors.selectedClassCode ? 'error' : ''}`}
+                          value={selectedClassCode}
+                          onChange={(e) => setSelectedClassCode(e.target.value)}
+                        >
+                          <option value="">-- Choose Class Code (e.g. S2A) --</option>
+                          {codes.map(c => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {errors.selectedClassCode && <span className="form-input-error-msg">{errors.selectedClassCode}</span>}
+                    </div>
+                  );
+                })()}
 
                 {/* 3. Select Specific Lecturer */}
                 <div className="form-group animate-fade-in">

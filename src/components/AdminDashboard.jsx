@@ -217,8 +217,8 @@ export default function AdminDashboard() {
       setCrudError('Please select a Module/Subject first.');
       return;
     }
-    if (!newClassCode.trim() || !newClassLecturer.trim() || !newClassYear) {
-      setCrudError('Class Code, Intake Year, and at least one Lecturer are required.');
+     if (!newClassLecturer.trim() || !newClassYear) {
+      setCrudError('Intake Year and at least one Lecturer are required.');
       return;
     }
 
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
     const targetSemester = parseInt(subjectObj.semester, 10);
 
     const classData = {
-      code: newClassCode.trim().toUpperCase(),
+      code: newClassCode.trim() ? newClassCode.trim().toUpperCase() : '',
       subjectId: classSubjectId,
       lecturerIds: lecturerIds,
       year: parseInt(newClassYear, 10),
