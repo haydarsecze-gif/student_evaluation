@@ -59,6 +59,7 @@ export default function AdminDashboard() {
   // Master Logs sub-view settings
   const [recordsSubView, setRecordsSubView] = useState('individual'); // 'individual' | 'classSummary'
   const [summaryClassId, setSummaryClassId] = useState('');
+  const [selectedSubId, setSelectedSubId] = useState(null);
 
   // Detail Modal popup selection state
   const [selectedSubmissionForModal, setSelectedSubmissionForModal] = useState(null);
@@ -643,216 +644,309 @@ export default function AdminDashboard() {
           </div>
 
           {recordsSubView === 'individual' ? (
-            /* SUB-VIEW 1: INDIVIDUAL LOGS */
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '2rem', alignItems: 'start' }}>
-              
-              {/* Logs table panel */}
-              <div className="table-container glass-panel" style={{ padding: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-                  <div style={{ position: 'relative', flexGrow: 1 }}>
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Search by student name or email..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                  </div>
+            /* SUB-VIEW 1: INDIVIDUAL LOGS - MASTER-DETAIL SPLIT LAYOUT */
+            (() => {
+              const activeSub = filteredSubmissions.find(s => s.id === selectedSubId) || filteredSubmissions[0];
 
-                  <select className="form-input" style={{ width: '150px' }} value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
-                    <option value="">All Programs</option>
-                    <option value="foundation">Foundation</option>
-                    <option value="degree">Degree</option>
-                  </select>
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+                  
+                  {/* Left Column: Scrollable List of Submissions */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    
+                    {/* Search & Filter Controls Panel */}
+                    <div className="glass-panel" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          style={{ width: '100%' }}
+                          placeholder="Search student or email..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                      </div>
 
-                  <select className="form-input" style={{ width: '130px' }} value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
-                    <option value="">All Semesters</option>
-                    <option value="1">Semester 1</option>
-                    <option value="2">Semester 2</option>
-                    <option value="3">Semester 3</option>
-                    <option value="4">Semester 4</option>
-                    <option value="5">Semester 5</option>
-                    <option value="6">Semester 6</option>
-                  </select>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <select className="form-input" value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
+                          <option value="">All Programs</option>
+                          <option value="foundation">Foundation</option>
+                          <option value="degree">Degree</option>
+                        </select>
 
-                  {/* Intake Year filter */}
-                  <select className="form-input" style={{ width: '120px' }} value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
-                    <option value="">All Years</option>
-                    {uniqueYears.map(yr => (
-                      <option key={yr} value={yr}>{yr}</option>
-                    ))}
-                  </select>
+                        <select className="form-input" value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
+                          <option value="">All Semesters</option>
+                          {[1,2,3,4,5,6].map(sem => (
+                            <option key={sem} value={sem}>Sem {sem}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                  {/* Intake Month filter */}
-                  <select className="form-input" style={{ width: '120px' }} value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
-                    <option value="">All Months</option>
-                    {uniqueMonths.map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                        <select className="form-input" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                          <option value="">All Years</option>
+                          {uniqueYears.map(yr => (
+                            <option key={yr} value={yr}>{yr}</option>
+                          ))}
+                        </select>
 
-                  <select className="form-input" style={{ width: '150px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
-                    <option value="">All Classes</option>
-                    {(() => {
-                      const codesSet = new Set();
-                      classes.forEach(c => {
-                        c.code.split(',').map(x => x.trim()).filter(Boolean).forEach(code => {
-                          codesSet.add(code);
-                        });
-                      });
-                      return Array.from(codesSet).sort().map(code => (
-                        <option key={code} value={code}>{code}</option>
-                      ));
-                    })()}
-                  </select>
-                </div>
+                        <select className="form-input" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                          <option value="">All Months</option>
+                          {uniqueMonths.map(m => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                {filteredSubmissions.length === 0 ? (
-                  <div style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    <div style={{ fontSize: '1rem', fontWeight: 500 }}>No matching evaluation records found</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Try adjusting your search query or dropdown filter selectors.</div>
-                  </div>
-                ) : (
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: '60px' }}>Answers</th>
-                        <th>Student</th>
-                        <th>Class &amp; Subject</th>
-                        <th style={{ width: '110px' }}>Score</th>
-                        <th>Assigned Teacher</th>
-                        <th>Submission Date</th>
-                        <th style={{ textAlign: 'center', width: '60px' }}>Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                      <select className="form-input" value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
+                        <option value="">All Class Sections</option>
+                        {(() => {
+                          const codesSet = new Set();
+                          classes.forEach(c => {
+                            c.code.split(',').map(x => x.trim()).filter(Boolean).forEach(code => {
+                              codesSet.add(code);
+                            });
+                          });
+                          return Array.from(codesSet).sort().map(code => (
+                            <option key={code} value={code}>{code}</option>
+                          ));
+                        })()}
+                      </select>
+                    </div>
+
+                    {/* Submissions List */}
+                    <div style={{
+                      maxHeight: '650px',
+                      overflowY: 'auto',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.75rem',
+                      paddingRight: '0.25rem'
+                    }}>
                       {filteredSubmissions.map(s => {
-                        const gradeObj = getGrade(s.score);
                         const classObj = classes.find(c => c.id === s.classId);
                         const subjectObj = subjects.find(sub => sub.id === s.subjectId);
+                        const gradeObj = getGrade(s.score);
+                        const isActive = activeSub && activeSub.id === s.id;
 
                         return (
-                          <React.Fragment key={s.id}>
-                            <tr>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  onClick={() => setSelectedSubmissionForModal(s)}
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                  title="View Details"
-                                >
-                                  SHOW
-                                </button>
-                              </td>
-                              <td>
-                                <div style={{ fontWeight: 600 }}>{s.name}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{s.email} | {s.phone}</div>
-                              </td>
-                              <td>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                                  Class: {s.class_code || (classObj ? classObj.code : 'Unknown Class')} {classObj ? `(${classObj.month} ${classObj.year})` : ''}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                  {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Subject'} &bull; Sem {s.semester} ({s.program})
-                                </div>
-                              </td>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                  <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{s.score}</span>
-                                  <span className={`badge ${gradeObj.class}`}>{gradeObj.letter}</span>
-                                </div>
-                              </td>
-                              <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{s.lecturer}</td>
-                              <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                {new Date(s.timestamp).toLocaleString()}
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  onClick={async () => {
-                                    if (await showConfirm(`Are you sure you want to delete ${s.name}'s evaluation record?`)) {
-                                      deleteSubmission(s.id);
-                                    }
-                                  }}
-                                  className="btn btn-secondary btn-sm btn-danger"
-                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                  title="Delete Submission Record"
-                                >
-                                  Delete
-                                </button>
-                              </td>
-                            </tr>
-                          </React.Fragment>
+                          <div
+                            key={s.id}
+                            onClick={() => setSelectedSubId(s.id)}
+                            className="glass-panel"
+                            style={{
+                              padding: '1.25rem',
+                              cursor: 'pointer',
+                              borderLeft: isActive ? '4px solid var(--primary)' : '1px solid var(--border-color)',
+                              background: isActive ? 'rgba(219, 39, 119, 0.03)' : 'var(--bg-card)',
+                              transform: isActive ? 'scale(1.01)' : 'none',
+                              transition: 'all 0.2s ease',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                              <span style={{ fontWeight: 650, fontSize: '0.95rem' }}>{s.name}</span>
+                              <span className={`badge ${gradeObj.class}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
+                                {gradeObj.letter} ({s.score})
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                              Class: <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{s.class_code || (classObj ? classObj.code : 'N/A')}</span>
+                              {subjectObj ? ` &bull; ${subjectObj.code}` : ''}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                              <span>{s.lecturer}</span>
+                              <span>{new Date(s.timestamp).toLocaleDateString()}</span>
+                            </div>
+                          </div>
                         );
                       })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
 
-              {/* Metrics Sidebar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Classes Metrics */}
-                <div className="glass-panel" style={{ padding: '1.25rem' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                    Submission Count per Class
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {classMetrics.map(item => (
-                      <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                        <div>
-                          <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{item.code}</span>
+                      {filteredSubmissions.length === 0 && (
+                        <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                          <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>No submissions match the filter requirements.</span>
                         </div>
-                        <span className="badge badge-info">{item.count}</span>
-                      </div>
-                    ))}
-                    {classes.length === 0 && <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No classes configured</span>}
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Semesters Metrics */}
-                <div className="glass-panel" style={{ padding: '1.25rem' }}>
-                  <h3 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                    Submission Count per Term
-                  </h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {semesterMetrics.map(item => (
-                      <div key={item.semester} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                        <span>Semester {item.semester}</span>
-                        <span className="badge badge-success">{item.count}</span>
+                  {/* Right Column: Detailed View Panel */}
+                  <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {activeSub ? (() => {
+                      const classObj = classes.find(c => c.id === activeSub.classId);
+                      const subjectObj = subjects.find(sub => sub.id === activeSub.subjectId);
+                      const gradeObj = getGrade(activeSub.score);
+
+                      return (
+                        <div className="glass-panel animate-fade-in" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', minHeight: '500px' }}>
+                          {/* Panel Header */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--border-color)', paddingBottom: '1rem' }}>
+                            <div>
+                              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                Evaluation Profile Details
+                              </span>
+                              <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.5rem', color: 'var(--text-primary)', marginTop: '0.25rem' }}>
+                                {activeSub.name}
+                              </h3>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
+                                {activeSub.email} &bull; {activeSub.phone}
+                              </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                {new Date(activeSub.timestamp).toLocaleString()}
+                              </span>
+                              <button
+                                onClick={async () => {
+                                  if (await showConfirm(`Are you sure you want to permanently delete this feedback submission?`)) {
+                                    deleteSubmission(activeSub.id);
+                                    setSelectedSubId(null);
+                                  }
+                                }}
+                                className="btn btn-secondary btn-sm btn-danger"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', marginTop: '0.25rem' }}
+                              >
+                                Delete Record
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Info grid */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', background: 'rgba(0,0,0,0.02)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CLASS SECTION</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>
+                                {activeSub.class_code || (classObj ? classObj.code : 'N/A')}
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>MODULE SUBJECT</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'N/A'}
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>TERM &amp; PROGRAM</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 500, textTransform: 'capitalize' }}>
+                                Sem {activeSub.semester} ({activeSub.program})
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>INTAKE BATCH</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                                {classObj ? `${classObj.month} ${classObj.year}` : 'N/A'}
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>EVALUATED TEACHER</span>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)' }}>
+                                {activeSub.lecturer}
+                              </span>
+                            </div>
+                            <div>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>OVERALL RATING</span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                                <span style={{ fontSize: '1rem', fontWeight: 750 }}>{activeSub.score} / 100</span>
+                                <span className={`badge ${gradeObj.class}`}>{gradeObj.letter}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Survey feedback responses */}
+                          <div>
+                            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
+                              Questionnaire Responses
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                              {customQuestions.map(q => {
+                                const answer = activeSub.customAnswers ? activeSub.customAnswers[q.id] : null;
+                                return (
+                                  <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                                      {q.label}
+                                    </span>
+                                    <span style={{ 
+                                      fontSize: '0.85rem', 
+                                      color: 'var(--text-primary)', 
+                                      whiteSpace: 'pre-wrap', 
+                                      lineHeight: '1.5',
+                                      wordBreak: 'break-word',
+                                      fontStyle: answer !== undefined && answer !== null ? 'normal' : 'italic'
+                                    }}>
+                                      {answer !== undefined && answer !== null ? (
+                                        Array.isArray(answer) ? answer.join(', ') : answer.toString()
+                                      ) : (
+                                        <span style={{ color: 'var(--text-muted)' }}>Not answered</span>
+                                      )}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                              {customQuestions.length === 0 && (
+                                <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
+                                  No additional custom questionnaire responses configured.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                        </div>
+                      );
+                    })() : (
+                      <div className="glass-panel" style={{ padding: '6rem 2rem', textAlign: 'center', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: '500px' }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>No Log Selected</div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                          Select a student evaluation card from the left panel to display details.
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-              </div>
 
-            </div>
+                </div>
+              );
+            })()
           ) : (
-            /* SUB-VIEW 2: GROUPED CLASS SUMMARIES */
+            /* SUB-VIEW 2: GROUPED CLASS SUMMARIES (SEPARATED BY INDIVIDUAL SECTION CODES) */
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div className="glass-panel" style={{ padding: '1.5rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
-                  Review Grouped Feedback by Class
+                  Review Grouped Feedback by Class Section
                 </h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
-                  Choose a class section below to view all student questionnaire responses grouped together.
+                  Choose a specific individual class section below to view grouped student questionnaire answers.
                 </p>
 
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <select
                     className="form-input"
-                    style={{ maxWidth: '400px', height: '40px' }}
+                    style={{ maxWidth: '500px', height: '40px' }}
                     value={summaryClassId}
                     onChange={(e) => setSummaryClassId(e.target.value)}
                   >
-                    <option value="">-- Choose Class Section --</option>
-                    {classes.map(c => {
-                      const subjectObj = subjects.find(sub => sub.id === c.subjectId);
-                      return (
-                        <option key={c.id} value={c.id}>
-                          {c.code} - {subjectObj ? subjectObj.name : 'Unknown Module'} ({c.month} {c.year})
+                    <option value="">-- Choose Class Section (e.g. S2A) --</option>
+                    {(() => {
+                      const options = [];
+                      classes.forEach(c => {
+                        const codes = c.code.split(',').map(x => x.trim()).filter(Boolean);
+                        const subjectObj = subjects.find(sub => sub.id === c.subjectId);
+                        const subjectName = subjectObj ? subjectObj.name : 'Unknown Module';
+                        codes.forEach(code => {
+                          options.push({
+                            id: `${c.id}::${code}`,
+                            label: `${code} - ${subjectName} [Intake: ${c.month} ${c.year}]`
+                          });
+                        });
+                      });
+                      options.sort((a, b) => a.label.localeCompare(b.label));
+                      return options.map(opt => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
                         </option>
-                      );
-                    })}
+                      ));
+                    })()}
                   </select>
                 </div>
               </div>
@@ -861,21 +955,25 @@ export default function AdminDashboard() {
                 if (!summaryClassId) {
                   return (
                     <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Class Selected</div>
+                      <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Class Section Selected</div>
                       <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                        Please select a class section from the dropdown list above to view feedback.
+                        Please select a specific class section from the dropdown list above to view feedback.
                       </div>
                     </div>
                   );
                 }
 
-                const selectedClass = classes.find(c => c.id === summaryClassId);
+                const [classId, sectionCode] = summaryClassId.split('::');
+                const selectedClass = classes.find(c => c.id === classId);
                 if (!selectedClass) return null;
 
                 const subjectObj = subjects.find(sub => sub.id === selectedClass.subjectId);
                 
-                // Filter submissions belonging to this class ID
-                const classSubmissions = submissions.filter(s => s.classId === selectedClass.id);
+                // Filter submissions belonging to this class ID and matching the specific class section code
+                const classSubmissions = submissions.filter(s => {
+                  return s.classId === selectedClass.id && 
+                    (s.class_code === sectionCode || (!s.class_code && selectedClass.code.split(',').map(x => x.trim())[0] === sectionCode));
+                });
 
                 // Calculate class average score
                 const scores = classSubmissions.map(s => s.score);
@@ -902,7 +1000,7 @@ export default function AdminDashboard() {
                       <div>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CLASS SECTION</span>
                         <span style={{ fontSize: '1.1rem', fontWeight: 700, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>
-                          {selectedClass.code}
+                          {sectionCode}
                         </span>
                       </div>
                       <div>
@@ -956,7 +1054,7 @@ export default function AdminDashboard() {
                             studentName: s.name,
                             studentEmail: s.email,
                             score: s.score,
-                            classCode: s.class_code || selectedClass.code,
+                            classCode: s.class_code || sectionCode,
                             lecturer: s.lecturer,
                             value: val
                           };
@@ -1026,7 +1124,7 @@ export default function AdminDashboard() {
                       {customQuestions.length === 0 && (
                         <div className="glass-panel" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
                           <span style={{ fontSize: '0.85rem', fontStyle: 'italic' }}>
-                            No custom survey questionnaire fields have been created in active configurations. Create questions in the \"Form Design\" tab to see grouped answers.
+                            No custom survey questionnaire fields have been created in active configurations. Create questions in the "Form Design" tab to see grouped answers.
                           </span>
                         </div>
                       )}
