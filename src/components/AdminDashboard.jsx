@@ -596,10 +596,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* Admin Tabs Navigation */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', width: '100%' }}>
         <button 
           onClick={() => setAdminTab('records')}
           className={`btn btn-sm ${adminTab === 'records' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ flex: 1, minWidth: '160px', justifyContent: 'center' }}
         >
           Evaluation Records ({submissions.length})
         </button>
@@ -607,6 +608,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => setAdminTab('classes')}
           className={`btn btn-sm ${adminTab === 'classes' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ flex: 1.5, minWidth: '220px', justifyContent: 'center' }}
         >
           Classes &amp; Subjects ({classes.length} Classes, {subjects.length} Modules, {lecturers.length} Lecturers)
         </button>
@@ -614,6 +616,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => setAdminTab('formDesign')}
           className={`btn btn-sm ${adminTab === 'formDesign' ? 'btn-primary' : 'btn-secondary'}`}
+          style={{ flex: 1, minWidth: '180px', justifyContent: 'center' }}
         >
           Form Design &amp; Semesters
         </button>
@@ -632,21 +635,22 @@ export default function AdminDashboard() {
             padding: '0.5rem 1rem',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)',
-            alignSelf: 'flex-start',
+            alignSelf: 'stretch',
+            width: '100%',
             flexWrap: 'wrap'
           }}>
             <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>View Format:</span>
             <button
               onClick={() => setRecordsSubView('individual')}
               className={`btn btn-sm ${recordsSubView === 'individual' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
             >
               Individual Student Logs ({submissions.length})
             </button>
             <button
               onClick={() => setRecordsSubView('classSummary')}
               className={`btn btn-sm ${recordsSubView === 'classSummary' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
             >
               Grouped Class Feedback Summaries
             </button>
@@ -1221,25 +1225,25 @@ export default function AdminDashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* Classes Sub-Tabs */}
-          <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap', width: '100%' }}>
             <button
               onClick={() => setClassesSubTab('classesList')}
               className={`btn btn-sm ${classesSubTab === 'classesList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center' }}
             >
               Classes &amp; Lecturers ({classes.length})
             </button>
             <button
               onClick={() => setClassesSubTab('subjectsList')}
               className={`btn btn-sm ${classesSubTab === 'subjectsList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '180px', justifyContent: 'center' }}
             >
               Subjects / Modules Catalog ({subjects.length})
             </button>
             <button
               onClick={() => setClassesSubTab('lecturersList')}
               className={`btn btn-sm ${classesSubTab === 'lecturersList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center' }}
             >
               Lecturers Directory ({lecturers.length})
             </button>
