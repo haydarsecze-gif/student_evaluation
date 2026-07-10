@@ -172,10 +172,8 @@ button, input, select, textarea {
 
 /* Page Containers */
 .app-container {
-  max-width: 1400px;
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2rem 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;

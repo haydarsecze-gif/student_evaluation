@@ -119,7 +119,15 @@ function AppContent() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      minHeight: '100vh',
+      maxWidth: '1400px',
+      width: '100%',
+      margin: '0 auto',
+      padding: '0 1.5rem'
+    }}>
       {/* Top navigation */}
       <Navbar activeTab={activeTab} setActiveTab={handleTabChange} />
 
@@ -190,7 +198,7 @@ function AppContent() {
 
       {/* Footer */}
       <footer className="glass-panel" style={{
-        margin: '0 1.5rem 1.5rem',
+        margin: '1.5rem 0',
         borderRadius: 'var(--radius-md)',
         padding: '1rem',
         textAlign: 'center',

@@ -18,7 +18,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
 
   return (
     <nav className="glass-panel" style={{
-      margin: '1rem 1.5rem 0',
+      margin: '1rem 0 0',
       borderRadius: 'var(--radius-md)',
       padding: '0.75rem 1.5rem',
       display: 'flex',
