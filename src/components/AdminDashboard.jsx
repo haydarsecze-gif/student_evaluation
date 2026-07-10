@@ -56,8 +56,8 @@ export default function AdminDashboard() {
   const [downloadMonth, setDownloadMonth] = useState('');
   const [downloadYear, setDownloadYear] = useState('');
 
-  // Row expansion state for custom answers
-  const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
+  // Detail Modal popup selection state
+  const [selectedSubmissionForModal, setSelectedSubmissionForModal] = useState(null);
 
   // Forms states for Classes (Added Intake Year and Month)
   const [editingClass, setEditingClass] = useState(null);
@@ -666,7 +666,6 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {filteredSubmissions.map(s => {
-                      const isExpanded = expandedSubmissionId === s.id;
                       const gradeObj = getGrade(s.score);
                       const classObj = classes.find(c => c.id === s.classId);
                       const subjectObj = subjects.find(sub => sub.id === s.subjectId);
@@ -675,16 +674,14 @@ export default function AdminDashboard() {
                         <React.Fragment key={s.id}>
                           <tr>
                             <td style={{ textAlign: 'center' }}>
-                              {customQuestions.length > 0 && (
-                                <button
-                                  onClick={() => setExpandedSubmissionId(isExpanded ? null : s.id)}
-                                  className="btn btn-secondary btn-sm"
-                                  style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                  title={isExpanded ? "Hide answers" : "View answers"}
-                                >
-                                  {isExpanded ? "HIDE" : "SHOW"}
-                                </button>
-                              )}
+                              <button
+                                onClick={() => setSelectedSubmissionForModal(s)}
+                                className="btn btn-secondary btn-sm"
+                                style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                                title="View Details"
+                              >
+                                SHOW
+                              </button>
                             </td>
                             <td>
                               <div style={{ fontWeight: 600 }}>{s.name}</div>
@@ -723,34 +720,6 @@ export default function AdminDashboard() {
                               </button>
                             </td>
                           </tr>
-                          {isExpanded && (
-                            <tr style={{ background: 'rgba(0,0,0,0.01)' }}>
-                              <td colSpan={7} style={{ padding: '1rem 1.5rem' }}>
-                                <div style={{ borderLeft: '2px solid var(--primary)', paddingLeft: '1rem' }}>
-                                  <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)', marginBottom: '0.50rem' }}>
-                                    Additional Questionnaire Responses
-                                  </h4>
-                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                    {customQuestions.map(q => {
-                                      const answer = s.customAnswers ? s.customAnswers[q.id] : null;
-                                      return (
-                                        <div key={q.id} style={{ fontSize: '0.8rem' }}>
-                                          <div style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>{q.label}</div>
-                                          <div style={{ color: 'var(--text-primary)', marginTop: '0.15rem' }}>
-                                            {answer !== undefined && answer !== null ? (
-                                              Array.isArray(answer) ? answer.join(', ') : answer.toString()
-                                            ) : (
-                                              <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Not answered</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
                         </React.Fragment>
                       );
                     })}
@@ -1557,6 +1526,175 @@ export default function AdminDashboard() {
 
         </div>
       )}
+
+      {/* Detailed Evaluation Record Modal Popup */}
+      {selectedSubmissionForModal && (() => {
+        const s = selectedSubmissionForModal;
+        const classObj = classes.find(c => c.id === s.classId);
+        const subjectObj = subjects.find(sub => sub.id === s.subjectId);
+        const gradeObj = getGrade(s.score);
+
+        return (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '1.5rem',
+            animation: 'fadeIn 0.25s ease-out'
+          }}>
+            <div className="glass-panel" style={{
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '85vh',
+              overflowY: 'auto',
+              background: 'var(--bg-card)',
+              borderTop: '4px solid var(--primary)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '2.25rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1.5rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            }}>
+              {/* Modal Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Student Evaluation Detail
+                  </span>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.4rem', color: 'var(--text-primary)', marginTop: '0.25rem' }}>
+                    {s.name}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedSubmissionForModal(null)}
+                  style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 300,
+                    lineHeight: '1',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '50%',
+                    background: 'none',
+                    border: 'none',
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
+                  onMouseOut={(e) => e.target.style.color = 'var(--text-secondary)'}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Grid 1: Basic Info & Academic Settings */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', background: 'rgba(0,0,0,0.02)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>EMAIL ADDRESS</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500, wordBreak: 'break-all' }}>{s.email}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CONTACT NUMBER</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{s.phone}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PROGRAM &amp; SEMESTER</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500, textTransform: 'capitalize' }}>
+                    {s.program} (Sem {s.semester})
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CLASS SECTION CODE</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>
+                    {s.class_code || (classObj ? classObj.code : 'N/A')}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>MODULE / SUBJECT</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                    {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>INTAKE BATCH</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                    {classObj ? `${classObj.month} ${classObj.year}` : 'N/A'}
+                  </span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>ASSIGNED LECTURER</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary)' }}>{s.lecturer}</span>
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PERFORMANCE RATING</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: 700 }}>{s.score} / 100</span>
+                    <span className={`badge ${gradeObj.class}`}>{gradeObj.letter}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Survey Responses Section */}
+              <div>
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.35rem' }}>
+                  Questionnaire Feedback
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {customQuestions.map(q => {
+                    const answer = s.customAnswers ? s.customAnswers[q.id] : null;
+                    return (
+                      <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                          {q.label}
+                        </span>
+                        <span style={{ 
+                          fontSize: '0.85rem', 
+                          color: 'var(--text-primary)', 
+                          whiteSpace: 'pre-wrap', 
+                          lineHeight: '1.5',
+                          wordBreak: 'break-word',
+                          fontStyle: answer !== undefined && answer !== null ? 'normal' : 'italic'
+                        }}>
+                          {answer !== undefined && answer !== null ? (
+                            Array.isArray(answer) ? answer.join(', ') : answer.toString()
+                          ) : (
+                            <span style={{ color: 'var(--text-muted)' }}>Not answered</span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {customQuestions.length === 0 && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center' }}>
+                      No additional custom questionnaire fields were configured at the time of this evaluation submission.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Close Button Footer */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button
+                  onClick={() => setSelectedSubmissionForModal(null)}
+                  className="btn btn-secondary btn-sm"
+                  style={{ padding: '0.5rem 1.5rem' }}
+                >
+                  Close Details
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );
