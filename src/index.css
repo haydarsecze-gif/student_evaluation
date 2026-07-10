@@ -649,5 +649,18 @@ input:checked + .slider:before {
   }
 }
 
+/* Submissions list container showing exactly 3 cards and hiding the scrollbar */
+.submissions-list-scrollable {
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+.submissions-list-scrollable::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+
 
 

@@ -728,13 +728,10 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Submissions List */}
-                    <div style={{
-                      maxHeight: '650px',
-                      overflowY: 'auto',
+                    <div className="submissions-list-scrollable" style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '0.75rem',
-                      paddingRight: '0.25rem'
+                      gap: '0.75rem'
                     }}>
                       {filteredSubmissions.map(s => {
                         const classObj = classes.find(c => c.id === s.classId);
@@ -748,15 +745,15 @@ export default function AdminDashboard() {
                             onClick={() => setSelectedSubId(s.id)}
                             className="glass-panel"
                             style={{
-                              padding: '1.25rem',
-                              cursor: 'pointer',
-                              borderLeft: isActive ? '4px solid var(--primary)' : '1px solid var(--border-color)',
-                              background: isActive ? 'rgba(219, 39, 119, 0.03)' : 'var(--bg-card)',
-                              transform: isActive ? 'scale(1.01)' : 'none',
-                              transition: 'all 0.2s ease',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              gap: '0.5rem'
+                                padding: '1.25rem',
+                                cursor: 'pointer',
+                                borderLeft: isActive ? '4px solid var(--primary)' : '1px solid var(--border-color)',
+                                background: isActive ? 'rgba(219, 39, 119, 0.03)' : 'var(--bg-card)',
+                                transform: isActive ? 'scale(1.01)' : 'none',
+                                transition: 'all 0.2s ease',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.5rem'
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -767,7 +764,7 @@ export default function AdminDashboard() {
                             </div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                               Class: <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{s.class_code || (classObj ? classObj.code : 'N/A')}</span>
-                              {subjectObj ? ` &bull; ${subjectObj.code}` : ''}
+                              {subjectObj ? ` • ${subjectObj.code}` : ''}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                               <span>{s.lecturer}</span>
