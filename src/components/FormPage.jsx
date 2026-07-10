@@ -370,7 +370,7 @@ export default function FormPage() {
                     const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
                     return (
                       <option key={c.id} value={c.id}>
-                        {subjectDisplay} [Class: {c.code}] - {lecturerDisplay}
+                        {subjectDisplay} [Class: {c.code} - {c.month} {c.year}] - {lecturerDisplay}
                       </option>
                     );
                   })}
@@ -381,7 +381,7 @@ export default function FormPage() {
 
             {/* Performance (Slider) */}
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label className="form-label">Performance / Score</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{score}</span>

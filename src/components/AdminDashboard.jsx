@@ -52,10 +52,12 @@ export default function AdminDashboard() {
   // Row expansion state for custom answers
   const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
 
-  // Forms states for Classes (Removed Class Section Name)
+  // Forms states for Classes (Added Intake Year and Month)
   const [editingClass, setEditingClass] = useState(null);
   const [classSubjectId, setClassSubjectId] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
+  const [newClassYear, setNewClassYear] = useState(new Date().getFullYear());
+  const [newClassMonth, setNewClassMonth] = useState('July');
   const [newClassLecturer, setNewClassLecturer] = useState(''); // comma-separated input list
 
   // Form states for Subjects (Modules)
@@ -101,22 +103,30 @@ export default function AdminDashboard() {
     return { letter: 'Hate', class: 'badge-danger' };
   };
 
-  // Excel exporter with custom question columns
+  // Excel exporter with custom question columns (Filtered dynamically by active Semester and Program UI filters)
   const handleExportExcel = () => {
-    if (classes.length === 0) {
-      showAlert("No classes configured. Please create classes first.", "Export Error");
+    // Filter classes based on active UI filters (Semester and Program)
+    const filteredClasses = classes.filter(c => {
+      const matchesSemester = filterSemester ? c.semester === parseInt(filterSemester, 10) : true;
+      const subjectObj = subjects.find(s => s.id === c.subjectId);
+      const matchesProgram = filterProgram ? (subjectObj ? subjectObj.program === filterProgram : false) : true;
+      return matchesSemester && matchesProgram;
+    });
+
+    if (filteredClasses.length === 0) {
+      showAlert("No classes match the current active semester / program filters.", "Export Error");
       return;
     }
 
     const wb = XLSX.utils.book_new();
 
-    classes.forEach(cls => {
+    filteredClasses.forEach(cls => {
       const classSubm = submissions.filter(s => s.classId === cls.id);
 
       const excelData = classSubm.map(s => {
         const subjectObj = subjects.find(sub => sub.id === s.subjectId);
         
-        // Base student rows (no Class Name column)
+        // Base student rows (includes Intake Year and Month columns)
         const row = {
           "Student Name": s.name,
           "Email": s.email,
@@ -124,6 +134,8 @@ export default function AdminDashboard() {
           "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
           "Semester": `Semester ${s.semester}`,
           "Class Code": cls.code,
+          "Intake Month": cls.month,
+          "Intake Year": cls.year,
           "Module Code": subjectObj ? subjectObj.code : 'N/A',
           "Subject Name": subjectObj ? subjectObj.name : 'N/A',
           "Performance Score": s.score,
@@ -153,6 +165,8 @@ export default function AdminDashboard() {
           "Program": "",
           "Semester": "",
           "Class Code": "",
+          "Intake Month": "",
+          "Intake Year": "",
           "Module Code": "",
           "Subject Name": "",
           "Performance Score": "",
@@ -166,12 +180,13 @@ export default function AdminDashboard() {
         ws = XLSX.utils.json_to_sheet([emptyHeaders]);
       }
 
-      // Safe sheet name (max 31 chars, no special characters)
-      const cleanName = cls.code.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
+      // Safe sheet name (max 31 chars, no special characters, incorporating Intake and Code)
+      const cleanName = `${cls.code}_${cls.month}_${cls.year}`.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
       XLSX.utils.book_append_sheet(wb, ws, cleanName || `Class_${cls.id}`);
     });
 
-    XLSX.writeFile(wb, `Student_Evaluation_Data_${new Date().toISOString().split('T')[0]}.xlsx`);
+    const filterSuffix = filterSemester ? `_Semester_${filterSemester}` : '';
+    XLSX.writeFile(wb, `Student_Evaluation_Data${filterSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   // Add or Edit Class (Auto-creates multiple Lecturers split by commas)
@@ -181,8 +196,8 @@ export default function AdminDashboard() {
       setCrudError('Please select a Module/Subject first.');
       return;
     }
-    if (!newClassCode.trim() || !newClassLecturer.trim()) {
-      setCrudError('Class Code and at least one Lecturer are required.');
+    if (!newClassCode.trim() || !newClassLecturer.trim() || !newClassYear) {
+      setCrudError('Class Code, Intake Year, and at least one Lecturer are required.');
       return;
     }
 
@@ -207,15 +222,14 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Auto-derive year based on semester
     const targetSemester = parseInt(subjectObj.semester, 10);
-    const targetYear = targetSemester <= 2 ? 1 : targetSemester <= 4 ? 2 : 3;
 
     const classData = {
       code: newClassCode.trim().toUpperCase(),
       subjectId: classSubjectId,
       lecturerIds: lecturerIds,
-      year: targetYear,
+      year: parseInt(newClassYear, 10),
+      month: newClassMonth,
       semester: targetSemester
     };
 
@@ -232,6 +246,8 @@ export default function AdminDashboard() {
     // Reset Class Inputs
     setClassSubjectId('');
     setNewClassCode('');
+    setNewClassYear(new Date().getFullYear());
+    setNewClassMonth('July');
     setNewClassLecturer('');
     setCrudError('');
   };
@@ -240,6 +256,8 @@ export default function AdminDashboard() {
     setEditingClass(cls);
     setClassSubjectId(cls.subjectId);
     setNewClassCode(cls.code);
+    setNewClassYear(cls.year || new Date().getFullYear());
+    setNewClassMonth(cls.month || 'July');
     
     // Map IDs to names list
     const lecturerNames = (cls.lecturerIds || [])
@@ -457,9 +475,14 @@ export default function AdminDashboard() {
             </span>
           </div>
 
-          <button onClick={handleExportExcel} className="btn btn-primary" style={{ gap: '0.5rem' }}>
-            Export Multi-Tab Excel
-          </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', alignItems: 'flex-end' }}>
+            <button onClick={handleExportExcel} className="btn btn-primary" style={{ gap: '0.5rem' }}>
+              Export Multi-Tab Excel
+            </button>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              {filterSemester || filterProgram ? '⚠️ Exports only matching semester filters' : 'Exports all configured classes'}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -525,7 +548,7 @@ export default function AdminDashboard() {
                 <select className="form-input" style={{ width: '180px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
                   <option value="">All Classes</option>
                   {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.code}</option>
+                    <option key={c.id} value={c.id}>{c.code} ({c.month} {c.year})</option>
                   ))}
                 </select>
               </div>
@@ -576,7 +599,7 @@ export default function AdminDashboard() {
                             </td>
                             <td>
                               <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                                Class: {classObj ? classObj.code : 'Unknown Class'}
+                                Class: {classObj ? `${classObj.code} (${classObj.month} ${classObj.year})` : 'Unknown Class'}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                 {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Subject'} &bull; Sem {s.semester} ({s.program})
@@ -726,7 +749,7 @@ export default function AdminDashboard() {
                         <th>Class Code</th>
                         <th>Subject (Module)</th>
                         <th>Lecturer(s)</th>
-                        <th>Term / Cycle</th>
+                        <th>Intake &amp; Term</th>
                         <th style={{ textAlign: 'center', width: '130px' }}>Actions</th>
                       </tr>
                     </thead>
@@ -759,7 +782,7 @@ export default function AdminDashboard() {
                               {lecturerDisplay}
                             </td>
                             <td style={{ fontSize: '0.85rem' }}>
-                              Year {cls.year || 1} &bull; Sem {cls.semester || 1} 
+                              Intake: <span style={{ fontWeight: 600 }}>{cls.month} {cls.year}</span> &bull; Sem {cls.semester || 1} 
                               {subjectObj && (
                                 <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.35rem' }}>
                                   ({subjectObj.program})
@@ -840,6 +863,42 @@ export default function AdminDashboard() {
                         />
                       </div>
 
+                      {/* Intake Year & Month Selectors */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group">
+                          <label className="form-label">Intake Year</label>
+                          <input
+                            type="number"
+                            min="2000"
+                            max="2100"
+                            className="form-input btn-sm"
+                            value={newClassYear}
+                            onChange={(e) => setNewClassYear(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Intake Month</label>
+                          <select
+                            className="form-input btn-sm"
+                            value={newClassMonth}
+                            onChange={(e) => setNewClassMonth(e.target.value)}
+                          >
+                            <option value="January">January</option>
+                            <option value="February">February</option>
+                            <option value="March">March</option>
+                            <option value="April">April</option>
+                            <option value="May">May</option>
+                            <option value="June">June</option>
+                            <option value="July">July</option>
+                            <option value="August">August</option>
+                            <option value="September">September</option>
+                            <option value="October">October</option>
+                            <option value="November">November</option>
+                            <option value="December">December</option>
+                          </select>
+                        </div>
+                      </div>
+
                       {/* Autocomplete Lecturer input box utilizing browser native datalist */}
                       <div className="form-group">
                         <label className="form-label">Assigned Lecturer(s)</label>
@@ -870,6 +929,8 @@ export default function AdminDashboard() {
                               setEditingClass(null);
                               setClassSubjectId('');
                               setNewClassCode('');
+                              setNewClassYear(new Date().getFullYear());
+                              setNewClassMonth('July');
                               setNewClassLecturer('');
                               setCrudError('');
                             }}

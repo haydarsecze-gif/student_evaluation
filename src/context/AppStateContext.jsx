@@ -92,13 +92,14 @@ export const AppStateProvider = ({ children }) => {
       setSubjects(resSubjects.data || []);
       setCustomQuestions(resQuestions.data || []);
 
-      // Map classes to camelCase local state structure (no name column)
+      // Map classes to camelCase local state structure (includes manual Intake Year and Month)
       const mappedClasses = (resClasses.data || []).map(cls => ({
         id: cls.id,
         code: cls.code,
         subjectId: cls.subject_id,
         lecturerIds: cls.lecturer_ids || [], 
         year: cls.year,
+        month: cls.month,
         semester: cls.semester
       }));
       setClasses(mappedClasses);
@@ -247,7 +248,7 @@ export const AppStateProvider = ({ children }) => {
     return newL ? newL.id : null;
   };
 
-  // CRUD for Classes
+  // CRUD for Classes (With manual year and month)
   const addClass = async (cls) => {
     try {
       const dbCls = {
@@ -255,6 +256,7 @@ export const AppStateProvider = ({ children }) => {
         subject_id: cls.subjectId,
         lecturer_ids: cls.lecturerIds || [],
         year: cls.year,
+        month: cls.month,
         semester: cls.semester
       };
       const { error } = await supabase.from('classes').insert([dbCls]);
@@ -273,6 +275,7 @@ export const AppStateProvider = ({ children }) => {
         subject_id: cls.subjectId,
         lecturer_ids: cls.lecturerIds || [],
         year: cls.year,
+        month: cls.month,
         semester: cls.semester
       };
       const { error } = await supabase.from('classes').update(dbCls).eq('id', cls.id);

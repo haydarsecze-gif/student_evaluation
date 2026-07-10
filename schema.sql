@@ -19,13 +19,14 @@ CREATE TABLE subjects (
   program TEXT NOT NULL CHECK (program IN ('foundation', 'degree'))
 );
 
--- 3. Create Classes Table (Linked directly to a Subject/Module and multiple Lecturers via UUID array)
+-- 3. Create Classes Table (Linked directly to a Subject/Module and multiple Lecturers, including manual Intake Year and Month)
 CREATE TABLE classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   code TEXT NOT NULL, -- e.g. "S2A"
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
   lecturer_ids UUID[] NOT NULL DEFAULT '{}',
-  year INTEGER NOT NULL,
+  year INTEGER NOT NULL, -- Intake Year (e.g. 2026)
+  month TEXT NOT NULL, -- Intake Month (e.g. "July")
   semester INTEGER NOT NULL
 );
 
@@ -105,12 +106,12 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Classes (Each class represents a cohort taking a subject, with multiple lecturers assigned, no separate name column)
-INSERT INTO classes (id, code, subject_id, lecturer_ids, year, semester)
+INSERT INTO classes (id, code, subject_id, lecturer_ids, year, month, semester)
 VALUES
-  ('c1c1c1c1-1111-1111-1111-111111111111', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d1111111-1111-1111-1111-111111111111']::UUID[], 1, 1),
-  ('c2c2c2c2-2222-2222-2222-222222222222', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d2222222-2222-2222-2222-222222222222']::UUID[], 1, 1),
-  ('c3c3c3c3-3333-3333-3333-333333333333', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d3333333-3333-3333-3333-333333333333', 'd4444444-4444-4444-4444-444444444444']::UUID[], 1, 2),
-  ('c4c4c4c4-4444-4444-4444-444444444444', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d4444444-4444-4444-4444-444444444444']::UUID[], 1, 2)
+  ('c1c1c1c1-1111-1111-1111-111111111111', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d1111111-1111-1111-1111-111111111111']::UUID[], 2026, 'July', 1),
+  ('c2c2c2c2-2222-2222-2222-222222222222', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d2222222-2222-2222-2222-222222222222']::UUID[], 2026, 'July', 1),
+  ('c3c3c3c3-3333-3333-3333-333333333333', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d3333333-3333-3333-3333-333333333333', 'd4444444-4444-4444-4444-444444444444']::UUID[], 2026, 'July', 2),
+  ('c4c4c4c4-4444-4444-4444-444444444444', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d4444444-4444-4444-4444-444444444444']::UUID[], 2026, 'July', 2)
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Custom Questions
