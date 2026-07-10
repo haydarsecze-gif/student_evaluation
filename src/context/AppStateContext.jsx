@@ -139,6 +139,7 @@ export const AppStateProvider = ({ children }) => {
         subjectId: s.subject_id,
         score: s.score,
         lecturer: s.lecturer,
+        class_code: s.class_code,
         timestamp: s.timestamp,
         customAnswers: s.custom_answers
       }));
