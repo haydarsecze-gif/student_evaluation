@@ -555,3 +555,21 @@ input:checked + .slider:before {
     margin-bottom: 0.25rem;
   }
 }
+
+/* Responsive grid layout class that flips list and forms containers on mobile */
+.responsive-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .responsive-grid-container {
+    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 1.5rem;
+  }
+}
+

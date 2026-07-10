@@ -1252,7 +1252,7 @@ export default function AdminDashboard() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 Manage Classes (Opened Sections)
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+              <div className="responsive-grid-container">
                 <div className="table-container glass-panel">
                   <table className="data-table">
                     <thead>
@@ -1649,7 +1649,7 @@ export default function AdminDashboard() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 Manage Subjects (Module Catalog)
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+              <div className="responsive-grid-container">
                 <div className="table-container glass-panel">
                   <table className="data-table">
                     <thead>
@@ -1811,7 +1811,7 @@ export default function AdminDashboard() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '1rem', borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                 Manage Lecturers (Staff Directory)
               </h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+              <div className="responsive-grid-container">
                 <div className="table-container glass-panel">
                   <table className="data-table">
                     <thead>
@@ -1921,7 +1921,7 @@ export default function AdminDashboard() {
 
       {/* TAB CONTENT: FORM DESIGN & SEMESTERS CONFIG */}
       {adminTab === 'formDesign' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'start' }}>
+        <div className="responsive-grid-container">
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             
