@@ -412,16 +412,15 @@ export default function AdminDashboard() {
 
   // Filter Submissions
   const filteredSubmissions = submissions.filter(s => {
+    const classObj = classes.find(c => c.id === s.classId);
+
     const matchesSearch = 
       s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.email.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesClass = filterClass ? s.classId === filterClass : true;
+    const matchesClass = filterClass ? (s.class_code === filterClass || (classObj && classObj.code.split(',').map(x => x.trim()).includes(filterClass))) : true;
     const matchesSemester = filterSemester ? s.semester === parseInt(filterSemester, 10) : true;
     const matchesProgram = filterProgram ? s.program === filterProgram : true;
-
-    // Lookup the class object for this submission to check year/month
-    const classObj = classes.find(c => c.id === s.classId);
     const matchesYear = filterYear ? (classObj ? classObj.year === parseInt(filterYear, 10) : false) : true;
     const matchesMonth = filterMonth ? (classObj ? classObj.month === filterMonth : false) : true;
 
@@ -430,10 +429,29 @@ export default function AdminDashboard() {
 
   // Calculate Metrics
   const getSubmissionsMetrics = () => {
-    const classMetrics = classes.map(c => {
-      const count = submissions.filter(subm => subm.classId === c.id).length;
-      return { id: c.id, code: c.code, count };
+    const codeCounts = {};
+    classes.forEach(c => {
+      const codes = c.code.split(',').map(x => x.trim()).filter(Boolean);
+      codes.forEach(code => {
+        codeCounts[code] = 0;
+      });
     });
+
+    submissions.forEach(s => {
+      const classObj = classes.find(c => c.id === s.classId);
+      const specificCode = s.class_code || (classObj ? classObj.code : 'Unknown');
+      const parts = specificCode.split(',').map(x => x.trim()).filter(Boolean);
+      parts.forEach(part => {
+        if (codeCounts[part] === undefined) {
+          codeCounts[part] = 0;
+        }
+        codeCounts[part]++;
+      });
+    });
+
+    const classMetrics = Object.keys(codeCounts).map(code => {
+      return { code, count: codeCounts[code] };
+    }).sort((a, b) => a.code.localeCompare(b.code));
 
     const semesterMetrics = [1, 2, 3, 4, 5, 6].map(sem => {
       const count = submissions.filter(subm => subm.semester === sem).length;
@@ -675,9 +693,17 @@ export default function AdminDashboard() {
 
                   <select className="form-input" style={{ width: '150px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
                     <option value="">All Classes</option>
-                    {classes.map(c => (
-                      <option key={c.id} value={c.id}>{c.code} ({c.month} {c.year})</option>
-                    ))}
+                    {(() => {
+                      const codesSet = new Set();
+                      classes.forEach(c => {
+                        c.code.split(',').map(x => x.trim()).filter(Boolean).forEach(code => {
+                          codesSet.add(code);
+                        });
+                      });
+                      return Array.from(codesSet).sort().map(code => (
+                        <option key={code} value={code}>{code}</option>
+                      ));
+                    })()}
                   </select>
                 </div>
 
