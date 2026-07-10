@@ -495,16 +495,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Dedicated Download Exporter Options Panel */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            padding: '0.5rem 1rem',
-            background: 'rgba(255,255,255,0.03)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-color)',
-            flexWrap: 'wrap'
-          }}>
+          <div className="download-panel">
             <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', marginRight: '0.25rem' }}>
               Excel Exporter Intake:
             </span>
