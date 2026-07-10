@@ -371,9 +371,19 @@ export default function FormPage() {
                   {availableClasses.map(c => {
                     const subjectObj = subjects.find(s => s.id === c.subjectId);
                     const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
+                    
+                    // Format lecturer display names
+                    const classLecturers = (c.lecturerIds || [])
+                      .map(id => lecturers.find(l => l.id === id)?.name)
+                      .filter(Boolean)
+                      .join(', ');
+                    
+                    const codePart = c.code ? `[Class: ${c.code}] ` : '';
+                    const lecturerPart = classLecturers ? ` [Lecturer: ${classLecturers}]` : '';
+
                     return (
                       <option key={c.id} value={c.id}>
-                        {subjectDisplay} [Intake: {c.month} {c.year}]
+                        {subjectDisplay} {codePart}[Intake: {c.month} {c.year}]{lecturerPart}
                       </option>
                     );
                   })}

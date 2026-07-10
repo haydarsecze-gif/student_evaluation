@@ -658,7 +658,7 @@ export default function AdminDashboard() {
               const activeSub = filteredSubmissions.find(s => s.id === selectedSubId) || filteredSubmissions[0];
 
               return (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+                <div className="master-detail-grid">
                   
                   {/* Left Column: Scrollable List of Submissions */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -781,8 +781,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Right Column: Detailed View Panel */}
-                  <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {activeSub ? (() => {
                       const classObj = classes.find(c => c.id === activeSub.classId);
                       const subjectObj = subjects.find(sub => sub.id === activeSub.subjectId);
@@ -1275,11 +1274,10 @@ export default function AdminDashboard() {
                         const lecturerDisplay = classLecturers.length > 0
                           ? classLecturers.map(l => l.name).join(', ')
                           : 'Unknown Lecturer';
-
                         return (
                           <tr key={cls.id}>
-                            <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
-                            <td>
+                            <td data-label="Class Code" style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code || '[No Code]'}</td>
+                            <td data-label="Subject (Module)">
                               {subjectObj ? (
                                 <div style={{ fontSize: '0.85rem' }}>
                                   <span>{subjectObj.name}</span>
@@ -1289,10 +1287,10 @@ export default function AdminDashboard() {
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Unassigned Module</span>
                               )}
                             </td>
-                            <td style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.85rem' }}>
+                            <td data-label="Lecturer(s)" style={{ color: 'var(--primary)', fontWeight: 500, fontSize: '0.85rem' }}>
                               {lecturerDisplay}
                             </td>
-                            <td style={{ fontSize: '0.85rem' }}>
+                            <td data-label="Intake & Term" style={{ fontSize: '0.85rem' }}>
                               Intake: <span style={{ fontWeight: 600 }}>{cls.month} {cls.year}</span> &bull; Sem {cls.semester || 1} 
                               {subjectObj && (
                                 <span style={{ textTransform: 'capitalize', color: 'var(--text-muted)', fontSize: '0.75rem', marginLeft: '0.35rem' }}>
@@ -1300,7 +1298,7 @@ export default function AdminDashboard() {
                                 </span>
                               )}
                             </td>
-                            <td style={{ textAlign: 'center' }}>
+                            <td data-label="Actions" style={{ textAlign: 'center' }}>
                               <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                                 <button
                                   onClick={() => startEditClass(cls)}
@@ -1664,19 +1662,19 @@ export default function AdminDashboard() {
                     <tbody>
                       {subjects.map(sub => (
                         <tr key={sub.id}>
-                          <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{sub.code}</td>
-                          <td>{sub.name}</td>
-                          <td>
+                          <td data-label="Module Code" style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{sub.code}</td>
+                          <td data-label="Subject Name">{sub.name}</td>
+                          <td data-label="Semester Cycle">
                             <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
                               Semester {sub.semester}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Program">
                             <span className="badge badge-secondary" style={{ textTransform: 'capitalize' }}>
                               {sub.program || 'degree'}
                             </span>
                           </td>
-                          <td style={{ textAlign: 'center' }}>
+                          <td data-label="Actions" style={{ textAlign: 'center' }}>
                             <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                               <button
                                 onClick={() => startEditSubject(sub)}
@@ -1826,8 +1824,8 @@ export default function AdminDashboard() {
                         const lClasses = classes.filter(c => (c.lecturerIds || []).includes(l.id));
                         return (
                           <tr key={l.id}>
-                            <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
-                            <td>
+                            <td data-label="Lecturer Name" style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
+                            <td data-label="Classes Teaching">
                               {lClasses.length > 0 ? (
                                 lClasses.map(c => {
                                   const subjectObj = subjects.find(sub => sub.id === c.subjectId);
@@ -1839,7 +1837,7 @@ export default function AdminDashboard() {
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No active classes</span>
                               )}
                             </td>
-                            <td style={{ textAlign: 'center' }}>
+                            <td data-label="Actions" style={{ textAlign: 'center' }}>
                               <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
                                 <button
                                   onClick={() => startEditLecturer(l)}
