@@ -78,6 +78,10 @@
   --shadow-lg: none;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* CSS Reset & Core Styling */
 * {
   box-sizing: border-box;

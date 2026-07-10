@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAppState } from '../context/AppStateContext';
-import * as XLSX from 'xlsx';
 
 export default function AdminDashboard() {
   const {
@@ -124,8 +123,7 @@ export default function AdminDashboard() {
     return { letter: 'Hate', class: 'badge-danger' };
   };
 
-  // Excel exporter with custom question columns (Filtered dynamically by dedicated download filters)
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     // Filter classes based on active download filters (Semester, Year, Month)
     const filteredClasses = classes.filter(c => {
       const matchesSemester = downloadSemester ? c.semester === parseInt(downloadSemester, 10) : true;
@@ -138,6 +136,9 @@ export default function AdminDashboard() {
       showAlert("No classes match the chosen download filters.", "Export Error");
       return;
     }
+
+    // Dynamic import SheetJS to reduce initial bundle chunk size by 300+ KB and speed up loading performance
+    const XLSX = await import('xlsx');
 
     const wb = XLSX.utils.book_new();
 
