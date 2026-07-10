@@ -600,7 +600,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => setAdminTab('records')}
           className={`btn btn-sm ${adminTab === 'records' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ flex: 1, minWidth: '160px', justifyContent: 'center' }}
+          style={{ flex: 1, minWidth: '160px', justifyContent: 'center', width: '100%' }}
         >
           Evaluation Records ({submissions.length})
         </button>
@@ -608,7 +608,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => setAdminTab('classes')}
           className={`btn btn-sm ${adminTab === 'classes' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ flex: 1.5, minWidth: '220px', justifyContent: 'center' }}
+          style={{ flex: 1.5, minWidth: '220px', justifyContent: 'center', width: '100%' }}
         >
           Classes &amp; Subjects ({classes.length} Classes, {subjects.length} Modules, {lecturers.length} Lecturers)
         </button>
@@ -616,7 +616,7 @@ export default function AdminDashboard() {
         <button 
           onClick={() => setAdminTab('formDesign')}
           className={`btn btn-sm ${adminTab === 'formDesign' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ flex: 1, minWidth: '180px', justifyContent: 'center' }}
+          style={{ flex: 1, minWidth: '180px', justifyContent: 'center', width: '100%' }}
         >
           Form Design &amp; Semesters
         </button>
@@ -643,14 +643,14 @@ export default function AdminDashboard() {
             <button
               onClick={() => setRecordsSubView('individual')}
               className={`btn btn-sm ${recordsSubView === 'individual' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center', width: '100%' }}
             >
               Individual Student Logs ({submissions.length})
             </button>
             <button
               onClick={() => setRecordsSubView('classSummary')}
               className={`btn btn-sm ${recordsSubView === 'classSummary' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center', width: '100%' }}
             >
               Grouped Class Feedback Summaries
             </button>
@@ -1229,21 +1229,21 @@ export default function AdminDashboard() {
             <button
               onClick={() => setClassesSubTab('classesList')}
               className={`btn btn-sm ${classesSubTab === 'classesList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center', width: '100%' }}
             >
               Classes &amp; Lecturers ({classes.length})
             </button>
             <button
               onClick={() => setClassesSubTab('subjectsList')}
               className={`btn btn-sm ${classesSubTab === 'subjectsList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '180px', justifyContent: 'center' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '180px', justifyContent: 'center', width: '100%' }}
             >
               Subjects / Modules Catalog ({subjects.length})
             </button>
             <button
               onClick={() => setClassesSubTab('lecturersList')}
               className={`btn btn-sm ${classesSubTab === 'lecturersList' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center' }}
+              style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', flex: 1, minWidth: '150px', justifyContent: 'center', width: '100%' }}
             >
               Lecturers Directory ({lecturers.length})
             </button>
