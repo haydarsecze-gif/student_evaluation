@@ -52,10 +52,9 @@ export default function AdminDashboard() {
   // Row expansion state for custom answers
   const [expandedSubmissionId, setExpandedSubmissionId] = useState(null);
 
-  // Forms states for Classes
+  // Forms states for Classes (Removed Class Section Name)
   const [editingClass, setEditingClass] = useState(null);
   const [classSubjectId, setClassSubjectId] = useState('');
-  const [newClassName, setNewClassName] = useState('');
   const [newClassCode, setNewClassCode] = useState('');
   const [newClassLecturer, setNewClassLecturer] = useState(''); // comma-separated input list
 
@@ -117,7 +116,7 @@ export default function AdminDashboard() {
       const excelData = classSubm.map(s => {
         const subjectObj = subjects.find(sub => sub.id === s.subjectId);
         
-        // Base student rows
+        // Base student rows (no Class Name column)
         const row = {
           "Student Name": s.name,
           "Email": s.email,
@@ -125,7 +124,6 @@ export default function AdminDashboard() {
           "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
           "Semester": `Semester ${s.semester}`,
           "Class Code": cls.code,
-          "Class Name": cls.name,
           "Module Code": subjectObj ? subjectObj.code : 'N/A',
           "Subject Name": subjectObj ? subjectObj.name : 'N/A',
           "Performance Score": s.score,
@@ -155,7 +153,6 @@ export default function AdminDashboard() {
           "Program": "",
           "Semester": "",
           "Class Code": "",
-          "Class Name": "",
           "Module Code": "",
           "Subject Name": "",
           "Performance Score": "",
@@ -170,7 +167,7 @@ export default function AdminDashboard() {
       }
 
       // Safe sheet name (max 31 chars, no special characters)
-      const cleanName = cls.name.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
+      const cleanName = cls.code.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
       XLSX.utils.book_append_sheet(wb, ws, cleanName || `Class_${cls.id}`);
     });
 
@@ -184,8 +181,8 @@ export default function AdminDashboard() {
       setCrudError('Please select a Module/Subject first.');
       return;
     }
-    if (!newClassCode.trim() || !newClassName.trim() || !newClassLecturer.trim()) {
-      setCrudError('Class Code, Section Name, and at least one Lecturer are required.');
+    if (!newClassCode.trim() || !newClassLecturer.trim()) {
+      setCrudError('Class Code and at least one Lecturer are required.');
       return;
     }
 
@@ -215,7 +212,6 @@ export default function AdminDashboard() {
     const targetYear = targetSemester <= 2 ? 1 : targetSemester <= 4 ? 2 : 3;
 
     const classData = {
-      name: newClassName.trim(),
       code: newClassCode.trim().toUpperCase(),
       subjectId: classSubjectId,
       lecturerIds: lecturerIds,
@@ -235,7 +231,6 @@ export default function AdminDashboard() {
 
     // Reset Class Inputs
     setClassSubjectId('');
-    setNewClassName('');
     setNewClassCode('');
     setNewClassLecturer('');
     setCrudError('');
@@ -244,7 +239,6 @@ export default function AdminDashboard() {
   const startEditClass = (cls) => {
     setEditingClass(cls);
     setClassSubjectId(cls.subjectId);
-    setNewClassName(cls.name);
     setNewClassCode(cls.code);
     
     // Map IDs to names list
@@ -397,7 +391,7 @@ export default function AdminDashboard() {
   const getSubmissionsMetrics = () => {
     const classMetrics = classes.map(c => {
       const count = submissions.filter(subm => subm.classId === c.id).length;
-      return { id: c.id, name: c.name, code: c.code, count };
+      return { id: c.id, code: c.code, count };
     });
 
     const semesterMetrics = [1, 2, 3, 4, 5, 6].map(sem => {
@@ -531,7 +525,7 @@ export default function AdminDashboard() {
                 <select className="form-input" style={{ width: '180px' }} value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
                   <option value="">All Classes</option>
                   {classes.map(c => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
+                    <option key={c.id} value={c.id}>{c.code}</option>
                   ))}
                 </select>
               </div>
@@ -582,7 +576,7 @@ export default function AdminDashboard() {
                             </td>
                             <td>
                               <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>
-                                {classObj ? classObj.name : 'Unknown Class'}
+                                Class: {classObj ? classObj.code : 'Unknown Class'}
                               </div>
                               <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                                 {subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Subject'} &bull; Sem {s.semester} ({s.program})
@@ -659,9 +653,8 @@ export default function AdminDashboard() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                   {classMetrics.map(item => (
                     <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                        <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', marginRight: '0.35rem', color: 'var(--secondary)' }}>{item.code}</span>
-                        <span>{item.name}</span>
+                      <div>
+                        <span style={{ fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{item.code}</span>
                       </div>
                       <span className="badge badge-info">{item.count}</span>
                     </div>
@@ -731,7 +724,6 @@ export default function AdminDashboard() {
                     <thead>
                       <tr>
                         <th>Class Code</th>
-                        <th>Class Name</th>
                         <th>Subject (Module)</th>
                         <th>Lecturer(s)</th>
                         <th>Term / Cycle</th>
@@ -753,7 +745,6 @@ export default function AdminDashboard() {
                         return (
                           <tr key={cls.id}>
                             <td style={{ fontWeight: 'bold', fontFamily: 'var(--font-mono)', color: 'var(--secondary)' }}>{cls.code}</td>
-                            <td>{cls.name}</td>
                             <td>
                               {subjectObj ? (
                                 <div style={{ fontSize: '0.85rem' }}>
@@ -787,7 +778,7 @@ export default function AdminDashboard() {
                                 </button>
                                 <button
                                   onClick={async () => {
-                                    if (await showConfirm(`Deleting class "${cls.name}" will automatically cascade and delete all submissions belonging to this class section. Proceed?`)) {
+                                    if (await showConfirm(`Deleting class "${cls.code}" will automatically cascade and delete all submissions belonging to this class section. Proceed?`)) {
                                       deleteClass(cls.id);
                                     }
                                   }}
@@ -849,17 +840,6 @@ export default function AdminDashboard() {
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label className="form-label">Class Section Name</label>
-                        <input
-                          type="text"
-                          className="form-input btn-sm"
-                          placeholder="e.g. Computer Application Section A"
-                          value={newClassName}
-                          onChange={(e) => setNewClassName(e.target.value)}
-                        />
-                      </div>
-
                       {/* Autocomplete Lecturer input box utilizing browser native datalist */}
                       <div className="form-group">
                         <label className="form-label">Assigned Lecturer(s)</label>
@@ -889,7 +869,6 @@ export default function AdminDashboard() {
                             onClick={() => {
                               setEditingClass(null);
                               setClassSubjectId('');
-                              setNewClassName('');
                               setNewClassCode('');
                               setNewClassLecturer('');
                               setCrudError('');
@@ -1093,7 +1072,7 @@ export default function AdminDashboard() {
                             <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{l.name}</td>
                             <td>
                               {lClasses.length > 0 ? (
-                                lClasses.map(c => `${c.code} (${c.name})`).join(', ')
+                                lClasses.map(c => `${c.code}`).join(', ')
                               ) : (
                                 <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontSize: '0.75rem' }}>No active classes</span>
                               )}

@@ -92,13 +92,12 @@ export const AppStateProvider = ({ children }) => {
       setSubjects(resSubjects.data || []);
       setCustomQuestions(resQuestions.data || []);
 
-      // Map classes to camelCase local state structure
+      // Map classes to camelCase local state structure (no name column)
       const mappedClasses = (resClasses.data || []).map(cls => ({
         id: cls.id,
-        name: cls.name,
         code: cls.code,
         subjectId: cls.subject_id,
-        lecturerIds: cls.lecturer_ids || [], // support multiple lecturers via UUID array
+        lecturerIds: cls.lecturer_ids || [], 
         year: cls.year,
         semester: cls.semester
       }));
@@ -252,7 +251,6 @@ export const AppStateProvider = ({ children }) => {
   const addClass = async (cls) => {
     try {
       const dbCls = {
-        name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
         lecturer_ids: cls.lecturerIds || [],
@@ -271,7 +269,6 @@ export const AppStateProvider = ({ children }) => {
   const updateClass = async (cls) => {
     try {
       const dbCls = {
-        name: cls.name,
         code: cls.code,
         subject_id: cls.subjectId,
         lecturer_ids: cls.lecturerIds || [],
