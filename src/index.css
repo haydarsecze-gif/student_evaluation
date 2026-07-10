@@ -225,12 +225,14 @@ button, input, select, textarea {
 }
 
 .btn-danger {
-  color: var(--danger);
-  border-color: var(--danger-glow);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
 }
 .btn-danger:hover {
   background: var(--danger-glow);
   border-color: var(--danger);
+  color: var(--danger);
 }
 
 /* Inputs & Form Controls (Solid slate inputs, no glows) */

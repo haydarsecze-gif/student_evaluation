@@ -1833,8 +1833,8 @@ export default function AdminDashboard() {
                               {lClasses.length > 0 ? (
                                 lClasses.map(c => {
                                   const subjectObj = subjects.find(sub => sub.id === c.subjectId);
-                                  const subjectDisplay = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
-                                  const codeDisplay = c.code ? ` [Class: ${c.code}]` : ' [No Class Code]';
+                                  const subjectDisplay = subjectObj ? subjectObj.name : 'Unknown Module';
+                                  const codeDisplay = c.code ? ` [Class: ${c.code}]` : '';
                                   return `${subjectDisplay}${codeDisplay}`;
                                 }).join('; ')
                               ) : (
