@@ -495,7 +495,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', flexGrow: 1, justifyContent: 'flex-end' }}>
           {/* Form availability switch */}
           <div style={{
             display: 'flex',
