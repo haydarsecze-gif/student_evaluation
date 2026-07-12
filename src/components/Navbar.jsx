@@ -83,8 +83,8 @@ export default function Navbar({ activeTab, setActiveTab }) {
           style={{
             background: 'var(--bg-input)',
             border: '1px solid var(--border-color)',
-            borderRadius: 'var(--radius-sm)',
-            padding: '0.4rem 0.75rem',
+            borderRadius: '9999px',
+            padding: '0.4rem 1rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -96,7 +96,7 @@ export default function Navbar({ activeTab, setActiveTab }) {
           className="btn-secondary"
           title="Toggle light/dark theme"
         >
-          {isDark ? 'LIGHT MODE' : 'DARK MODE'}
+          {isDark ? 'LIGHT' : 'DARK'}
         </button>
 
         <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
