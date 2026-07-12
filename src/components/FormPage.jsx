@@ -395,7 +395,7 @@ export default function FormPage() {
                 style={{
                   width: '100%',
                   height: '6px',
-                  background: 'rgba(0,0,0,0.06)',
+                  background: 'var(--border-color)',
                   borderRadius: '3px',
                   outline: 'none',
                   WebkitAppearance: 'none',
