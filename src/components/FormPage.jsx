@@ -460,21 +460,58 @@ export default function FormPage() {
                         display: 'flex',
                         flexDirection: isRow ? 'row' : 'column',
                         flexWrap: isRow ? 'wrap' : 'nowrap',
-                        gap: isRow ? '1.5rem' : '0.5rem',
+                        gap: isRow ? '0.75rem' : '0.5rem',
                         marginTop: '0.5rem'
                       }}>
-                        {q.options.map((opt, oIdx) => (
-                          <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                            <input
-                              type="radio"
-                              name={`custom_${q.id}`}
-                              checked={answerValue === opt}
-                              onChange={() => handleCustomChange(q.id, opt)}
-                              style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                            />
-                            <span>{opt}</span>
-                          </label>
-                        ))}
+                        {q.options.map((opt, oIdx) => {
+                          const isSelected = answerValue === opt;
+                          if (isRow) {
+                            return (
+                              <label
+                                key={oIdx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: '0.5rem 1.25rem',
+                                  borderRadius: '25px',
+                                  border: '2px solid',
+                                  borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
+                                  background: isSelected ? 'rgba(219, 39, 119, 0.08)' : 'var(--bg-card)',
+                                  color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
+                                  fontWeight: isSelected ? 650 : 500,
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: isSelected ? '0 4px 10px rgba(219, 39, 119, 0.1)' : 'none',
+                                  transform: isSelected ? 'scale(1.02)' : 'none',
+                                  userSelect: 'none'
+                                }}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`custom_${q.id}`}
+                                  checked={isSelected}
+                                  onChange={() => handleCustomChange(q.id, opt)}
+                                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                                />
+                                <span>{opt}</span>
+                              </label>
+                            );
+                          }
+                          return (
+                            <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                              <input
+                                type="radio"
+                                name={`custom_${q.id}`}
+                                checked={answerValue === opt}
+                                onChange={() => handleCustomChange(q.id, opt)}
+                                style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                              />
+                              <span>{opt}</span>
+                            </label>
+                          );
+                        })}
                       </div>
                     )}
 
@@ -484,11 +521,44 @@ export default function FormPage() {
                         display: 'flex',
                         flexDirection: isRow ? 'row' : 'column',
                         flexWrap: isRow ? 'wrap' : 'nowrap',
-                        gap: isRow ? '1.5rem' : '0.5rem',
+                        gap: isRow ? '0.75rem' : '0.5rem',
                         marginTop: '0.5rem'
                       }}>
                         {q.options.map((opt, oIdx) => {
                           const isChecked = Array.isArray(answerValue) && answerValue.includes(opt);
+                          if (isRow) {
+                            return (
+                              <label
+                                key={oIdx}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  padding: '0.5rem 1.25rem',
+                                  borderRadius: '25px',
+                                  border: '2px solid',
+                                  borderColor: isChecked ? 'var(--primary)' : 'var(--border-color)',
+                                  background: isChecked ? 'rgba(219, 39, 119, 0.08)' : 'var(--bg-card)',
+                                  color: isChecked ? 'var(--primary)' : 'var(--text-secondary)',
+                                  fontWeight: isChecked ? 650 : 500,
+                                  fontSize: '0.85rem',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease',
+                                  boxShadow: isChecked ? '0 4px 10px rgba(219, 39, 119, 0.1)' : 'none',
+                                  transform: isChecked ? 'scale(1.02)' : 'none',
+                                  userSelect: 'none'
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleCustomChange(q.id, opt, true)}
+                                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                                />
+                                <span>{opt}</span>
+                              </label>
+                            );
+                          }
                           return (
                             <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                               <input
