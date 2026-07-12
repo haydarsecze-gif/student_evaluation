@@ -485,7 +485,9 @@ export default function FormPage() {
                                   transition: 'all 0.2s ease',
                                   boxShadow: isSelected ? '0 4px 10px rgba(219, 39, 119, 0.1)' : 'none',
                                   transform: isSelected ? 'scale(1.02)' : 'none',
-                                  userSelect: 'none'
+                                  userSelect: 'none',
+                                  flex: '1 1 0px',
+                                  minWidth: '85px'
                                 }}
                               >
                                 <input
@@ -546,7 +548,9 @@ export default function FormPage() {
                                   transition: 'all 0.2s ease',
                                   boxShadow: isChecked ? '0 4px 10px rgba(219, 39, 119, 0.1)' : 'none',
                                   transform: isChecked ? 'scale(1.02)' : 'none',
-                                  userSelect: 'none'
+                                  userSelect: 'none',
+                                  flex: '1 1 0px',
+                                  minWidth: '85px'
                                 }}
                               >
                                 <input
