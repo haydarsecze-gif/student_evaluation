@@ -50,18 +50,20 @@ export default function Navbar({ activeTab, setActiveTab }) {
           Student Form
           {formActive ? (
             <span style={{
-              width: '6px',
-              height: '6px',
+              width: '8px',
+              height: '8px',
               borderRadius: '50%',
-              background: 'var(--success)',
+              background: '#22c55e',
+              boxShadow: '0 0 8px rgba(34, 197, 94, 0.8)',
               marginLeft: '0.25rem'
             }} />
           ) : (
             <span style={{
-              width: '6px',
-              height: '6px',
+              width: '8px',
+              height: '8px',
               borderRadius: '50%',
-              background: 'var(--danger)',
+              background: '#ef4444',
+              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8)',
               marginLeft: '0.25rem'
             }} />
           )}
