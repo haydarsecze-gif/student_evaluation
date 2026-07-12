@@ -60,14 +60,14 @@
   --accent: #f5f5f5;
   
   --bg-main: #000000;
-  --bg-card: #0c0c0c;
-  --bg-input: #050505;
-  --border-color: #222222;
-  --border-hover: #3a3a3a;
+  --bg-card: #121212;
+  --bg-input: #1a1a1a;
+  --border-color: #2a2a2a;
+  --border-hover: #404040;
   
   --text-primary: #f5f5f5;
   --text-secondary: #a3a3a3;
-  --text-muted: #525252;
+  --text-muted: #666666;
   
   --success: #ffffff;
   --success-glow: rgba(255, 255, 255, 0.08);
@@ -76,9 +76,9 @@
   --danger: #ffffff;
   --danger-glow: rgba(255, 255, 255, 0.08);
   
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
+  --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.03);
+  --shadow-md: 0 4px 20px rgba(255, 255, 255, 0.04), 0 0 12px rgba(255, 255, 255, 0.02);
+  --shadow-lg: 0 10px 30px rgba(255, 255, 255, 0.05), 0 0 20px rgba(255, 255, 255, 0.03);
 }
 
 html {
