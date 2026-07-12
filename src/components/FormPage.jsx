@@ -257,7 +257,6 @@ export default function FormPage() {
                   className={`form-input ${errors.semester ? 'error' : ''}`}
                   value={semester}
                   onChange={(e) => setSemester(e.target.value)}
-                  style={!program ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                 >
                   <option value="">
                     {!program ? 'Select Program first' : 'Select Semester'}
@@ -288,7 +287,6 @@ export default function FormPage() {
                   className={`form-input ${errors.classId ? 'error' : ''}`}
                   value={classId}
                   onChange={(e) => setClassId(e.target.value)}
-                  style={!semester ? { cursor: 'not-allowed', background: 'rgba(255,255,255,0.02)' } : {}}
                 >
                   <option value="">
                     {!semester ? 'Select Semester first' : 'Select Module / Subject'}
@@ -474,7 +472,7 @@ export default function FormPage() {
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   padding: '0.5rem 1.25rem',
-                                  borderRadius: '25px',
+                                  borderRadius: '9999px',
                                   border: '2px solid',
                                   borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
                                   background: isSelected ? 'var(--primary-glow)' : 'var(--bg-card)',
@@ -537,7 +535,7 @@ export default function FormPage() {
                                   alignItems: 'center',
                                   justifyContent: 'center',
                                   padding: '0.5rem 1.25rem',
-                                  borderRadius: '25px',
+                                  borderRadius: '9999px',
                                   border: '2px solid',
                                   borderColor: isChecked ? 'var(--primary)' : 'var(--border-color)',
                                   background: isChecked ? 'var(--primary-glow)' : 'var(--bg-card)',

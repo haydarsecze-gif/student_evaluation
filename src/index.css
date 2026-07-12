@@ -283,6 +283,13 @@ button, input, select, textarea {
   border-color: var(--danger);
 }
 
+.form-input:disabled {
+  background-color: var(--bg-main) !important;
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: var(--border-color);
+}
+
 .form-input-error-msg {
   color: var(--danger);
   font-size: 0.75rem;

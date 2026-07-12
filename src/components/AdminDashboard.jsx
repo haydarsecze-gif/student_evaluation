@@ -566,7 +566,7 @@ export default function AdminDashboard() {
             {/* Semester Select */}
             <select
               className="form-input btn-sm"
-              style={{ width: '120px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              style={{ width: '120px', padding: '0.2rem 0.75rem', fontSize: '0.75rem', height: '28px', borderRadius: '9999px' }}
               value={downloadSemester}
               onChange={(e) => setDownloadSemester(e.target.value)}
             >
@@ -582,7 +582,7 @@ export default function AdminDashboard() {
             {/* Month Select */}
             <select
               className="form-input btn-sm"
-              style={{ width: '100px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              style={{ width: '110px', padding: '0.2rem 0.75rem', fontSize: '0.75rem', height: '28px', borderRadius: '9999px' }}
               value={downloadMonth}
               onChange={(e) => setDownloadMonth(e.target.value)}
             >
@@ -604,7 +604,7 @@ export default function AdminDashboard() {
             {/* Year Select */}
             <select
               className="form-input btn-sm"
-              style={{ width: '90px', padding: '0.2rem 0.4rem', fontSize: '0.75rem', height: '28px' }}
+              style={{ width: '100px', padding: '0.2rem 0.75rem', fontSize: '0.75rem', height: '28px', borderRadius: '9999px' }}
               value={downloadYear}
               onChange={(e) => setDownloadYear(e.target.value)}
             >
