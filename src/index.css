@@ -411,10 +411,10 @@ input:checked + .slider:before {
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.2rem 0.5rem;
+  padding: 0.3rem 0.8rem;
   font-size: 0.7rem;
   font-weight: 600;
-  border-radius: var(--radius-sm);
+  border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
