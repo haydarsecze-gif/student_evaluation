@@ -1132,12 +1132,15 @@ export default function AdminDashboard() {
                         const answers = classSubmissions.map(s => {
                           const val = s.customAnswers ? s.customAnswers[q.id] : null;
                           const classObj = classes.find(c => c.id === s.classId);
+                          const subjectObj = subjects.find(sub => sub.id === s.subjectId);
                           return {
                             studentName: s.name,
                             studentEmail: s.email,
                             score: s.score,
                             classCode: s.class_code || (classObj ? classObj.code.split(',').map(x => x.trim())[0] : 'Unknown'),
                             lecturer: s.lecturer,
+                            moduleName: subjectObj ? subjectObj.name : 'N/A',
+                            moduleCode: subjectObj ? subjectObj.code : 'N/A',
                             value: val
                           };
                         }).filter(a => a.value !== undefined && a.value !== null && a.value !== '');
@@ -1188,7 +1191,7 @@ export default function AdminDashboard() {
                                       Class Section: <span style={{ fontWeight: 600, color: 'var(--secondary)', fontFamily: 'var(--font-mono)' }}>{ans.classCode}</span> &bull; Teacher: <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{ans.lecturer}</span>
                                     </div>
                                     <div style={{ fontWeight: 500 }}>
-                                      — Rating: <span style={{ fontWeight: 700 }}>{ans.score} / 5</span>
+                                      No. {idx + 1} &bull; {ans.moduleName} ({ans.moduleCode}) &bull; Rating: <span style={{ fontWeight: 700 }}>{ans.score} / 5</span>
                                     </div>
                                   </div>
                                 </div>
