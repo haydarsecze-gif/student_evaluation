@@ -757,8 +757,18 @@ export default function AdminDashboard() {
                               </span>
                             </div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                              Class: <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{s.class_code || (classObj ? classObj.code : 'N/A')}</span>
-                              {subjectObj ? ` • ${subjectObj.code}` : ''}
+                              {(() => {
+                                const classCodeVal = (s.class_code || (classObj ? classObj.code : '')).trim();
+                                const subjectDisplayStr = subjectObj ? `${subjectObj.name} (${subjectObj.code})` : 'Unknown Module';
+                                if (classCodeVal) {
+                                  return (
+                                    <>
+                                      Class: <span style={{ fontWeight: 600, color: 'var(--secondary)' }}>{classCodeVal}</span> • {subjectDisplayStr}
+                                    </>
+                                  );
+                                }
+                                return subjectDisplayStr;
+                              })()}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
                               <span>{s.lecturer}</span>
