@@ -126,45 +126,64 @@ export default function AdminDashboard() {
   };
 
   const handleExportExcel = async () => {
-    // Filter classes based on active download filters (Semester, Year, Month)
-    const filteredClasses = classes.filter(c => {
-      const matchesSemester = downloadSemester ? c.semester === parseInt(downloadSemester, 10) : true;
-      const matchesYear = downloadYear ? c.year === parseInt(downloadYear, 10) : true;
-      const matchesMonth = downloadMonth ? c.month === downloadMonth : true;
+    // Filter submissions based on active download filters (Semester, Year, Month)
+    const filteredSubmissionsForExport = submissions.filter(s => {
+      const cls = classes.find(c => c.id === s.classId);
+      if (!cls) return false;
+      const matchesSemester = downloadSemester ? s.semester === parseInt(downloadSemester, 10) : true;
+      const matchesYear = downloadYear ? cls.year === parseInt(downloadYear, 10) : true;
+      const matchesMonth = downloadMonth ? cls.month === downloadMonth : true;
       return matchesSemester && matchesYear && matchesMonth;
     });
 
-    if (filteredClasses.length === 0) {
-      showAlert("No classes match the chosen download filters.", "Export Error");
+    if (filteredSubmissionsForExport.length === 0) {
+      showAlert("No evaluation records match the chosen download filters.", "Export Error");
       return;
     }
 
-    // Dynamic import SheetJS to reduce initial bundle chunk size by 300+ KB and speed up loading performance
+    // Dynamic import SheetJS to reduce initial bundle chunk size
     const XLSX = await import('xlsx');
 
     const wb = XLSX.utils.book_new();
 
-    filteredClasses.forEach(cls => {
-      const classSubm = submissions.filter(s => s.classId === cls.id);
+    // Group submissions by subject module code
+    const submissionsBySubject = {};
+    filteredSubmissionsForExport.forEach(s => {
+      const subjectObj = subjects.find(sub => sub.id === s.subjectId);
+      const subjectKey = subjectObj ? subjectObj.code : 'Unknown_Module';
+      if (!submissionsBySubject[subjectKey]) {
+        submissionsBySubject[subjectKey] = [];
+      }
+      submissionsBySubject[subjectKey].push(s);
+    });
 
-      const excelData = classSubm.map(s => {
+    // Generate a sheet for each module
+    Object.keys(submissionsBySubject).forEach(subjectKey => {
+      const moduleSubmissions = submissionsBySubject[subjectKey];
+      
+      const excelData = moduleSubmissions.map(s => {
         const subjectObj = subjects.find(sub => sub.id === s.subjectId);
+        const cls = classes.find(c => c.id === s.classId);
         
-        // Base student rows (includes Intake Year and Month columns)
         const row = {
           "Record No": getSubNumber(s.id),
-          "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
-          "Semester": `Semester ${s.semester}`,
-          "Class Code": s.class_code || cls.code,
-          "Intake Month": cls.month,
-          "Intake Year": cls.year,
           "Module Code": subjectObj ? subjectObj.code : 'N/A',
-          "Subject Name": subjectObj ? subjectObj.name : 'N/A',
-          "Performance Score": s.score,
-          "Sentiment Rating": getGrade(s.score).letter,
-          "Lecturer Assigned": s.lecturer,
-          "Submission Date": new Date(s.timestamp).toLocaleString()
+          "Module Name": subjectObj ? subjectObj.name : 'N/A',
         };
+
+        const classCodeVal = (s.class_code || (cls ? cls.code : '')).trim();
+        if (classCodeVal) {
+          row["Class Code"] = classCodeVal;
+        }
+
+        row["Program"] = s.program === 'foundation' ? 'Foundation' : 'Degree';
+        row["Semester"] = `Semester ${s.semester}`;
+        row["Intake Month"] = cls ? cls.month : 'N/A';
+        row["Intake Year"] = cls ? cls.year : 'N/A';
+        row["Performance Rating"] = s.score;
+        row["Sentiment Rating"] = getGrade(s.score).letter;
+        row["Lecturer Assigned"] = s.lecturer;
+        row["Submission Date"] = new Date(s.timestamp).toLocaleString();
 
         // Inject custom answers as separate columns
         customQuestions.forEach(q => {
@@ -176,34 +195,24 @@ export default function AdminDashboard() {
         return row;
       });
 
-      let ws;
-      if (excelData.length > 0) {
-        ws = XLSX.utils.json_to_sheet(excelData);
-      } else {
-        // Headers only placeholder
-        const emptyHeaders = {
-          "Record No": "No records logged for this class",
-          "Program": "",
-          "Semester": "",
-          "Class Code": "",
-          "Intake Month": "",
-          "Intake Year": "",
-          "Module Code": "",
-          "Subject Name": "",
-          "Performance Score": "",
-          "Sentiment Rating": "",
-          "Lecturer Assigned": "",
-          "Submission Date": ""
-        };
-        customQuestions.forEach(q => {
-          emptyHeaders[`Question: ${q.label}`] = "";
-        });
-        ws = XLSX.utils.json_to_sheet([emptyHeaders]);
-      }
+      const ws = XLSX.utils.json_to_sheet(excelData);
 
-      // Safe sheet name (max 31 chars, no special characters, incorporating Intake and Code)
-      const cleanName = `${cls.code}_${cls.month}_${cls.year}`.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
-      XLSX.utils.book_append_sheet(wb, ws, cleanName || `Class_${cls.id}`);
+      // Auto-fit column widths to make sheet look organized and clean
+      const colWidths = {};
+      excelData.forEach(row => {
+        Object.keys(row).forEach(key => {
+          const cellValue = row[key] ? row[key].toString() : '';
+          const len = Math.max(key.length, cellValue.length);
+          colWidths[key] = Math.max(colWidths[key] || 0, len);
+        });
+      });
+      ws['!cols'] = Object.keys(colWidths).map(key => ({
+        wch: Math.min(Math.max(colWidths[key] + 3, 10), 50)
+      }));
+
+      // Safe sheet name (max 31 chars, no special characters)
+      const cleanSheetName = subjectKey.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
+      XLSX.utils.book_append_sheet(wb, ws, cleanSheetName || 'Module_Data');
     });
 
     let filterSuffix = '';
@@ -770,7 +779,7 @@ export default function AdminDashboard() {
                                 padding: '1.25rem',
                                 cursor: 'pointer',
                                 borderLeft: isActive ? '4px solid var(--primary)' : '1px solid var(--border-color)',
-                                background: isActive ? 'rgba(219, 39, 119, 0.03)' : 'var(--bg-card)',
+                                background: isActive ? 'var(--primary-glow)' : 'var(--bg-card)',
                                 transform: isActive ? 'scale(1.01)' : 'none',
                                 transition: 'all 0.2s ease',
                                 display: 'flex',
@@ -1635,7 +1644,7 @@ export default function AdminDashboard() {
                                     transition: 'background 0.2s',
                                     textAlign: 'left'
                                   }}
-                                  onMouseOver={(e) => e.target.style.background = 'rgba(219, 39, 119, 0.05)'}
+                                  onMouseOver={(e) => e.target.style.background = 'var(--primary-glow)'}
                                   onMouseOut={(e) => e.target.style.background = 'none'}
                                 >
                                   {l.name}
