@@ -141,28 +141,30 @@ export default function AdminDashboard() {
       return;
     }
 
-    // Dynamic import SheetJS to reduce initial bundle chunk size
-    const XLSX = await import('xlsx');
+    // Dynamic import SheetJS Style to support custom styles in exported spreadsheets
+    const XLSX = await import('xlsx-js-style');
 
     const wb = XLSX.utils.book_new();
 
-    // Group submissions by subject module code
-    const submissionsBySubject = {};
+    // Group submissions by subject ID to avoid code-collision
+    const submissionsBySubjectId = {};
     filteredSubmissionsForExport.forEach(s => {
-      const subjectObj = subjects.find(sub => sub.id === s.subjectId);
-      const subjectKey = subjectObj ? subjectObj.code : 'Unknown_Module';
-      if (!submissionsBySubject[subjectKey]) {
-        submissionsBySubject[subjectKey] = [];
+      const subjectKey = s.subjectId || 'Unknown_Subject';
+      if (!submissionsBySubjectId[subjectKey]) {
+        submissionsBySubjectId[subjectKey] = [];
       }
-      submissionsBySubject[subjectKey].push(s);
+      submissionsBySubjectId[subjectKey].push(s);
     });
 
+    const sheetNames = new Set();
+
     // Generate a sheet for each module
-    Object.keys(submissionsBySubject).forEach(subjectKey => {
-      const moduleSubmissions = submissionsBySubject[subjectKey];
+    Object.keys(submissionsBySubjectId).forEach(subjectId => {
+      const moduleSubmissions = submissionsBySubjectId[subjectId];
+      const subjectObj = subjects.find(sub => sub.id === subjectId);
+      const subjectName = subjectObj ? subjectObj.name : 'Unknown Module';
       
       const excelData = moduleSubmissions.map(s => {
-        const subjectObj = subjects.find(sub => sub.id === s.subjectId);
         const cls = classes.find(c => c.id === s.classId);
         
         const row = {
@@ -197,6 +199,50 @@ export default function AdminDashboard() {
 
       const ws = XLSX.utils.json_to_sheet(excelData);
 
+      // Apply gorgeous black/white styles & alternate row zebra striping
+      const range = XLSX.utils.decode_range(ws['!ref']);
+      for (let R = range.s.r; R <= range.e.r; ++R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+          const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+          if (!ws[cellRef]) continue;
+
+          // Default styles
+          ws[cellRef].s = {
+            font: { name: 'Arial', size: 10 },
+            alignment: { vertical: 'center', wrapText: true },
+            border: {
+              top: { style: 'thin', color: { rgb: 'E2E8F0' } },
+              bottom: { style: 'thin', color: { rgb: 'E2E8F0' } },
+              left: { style: 'thin', color: { rgb: 'E2E8F0' } },
+              right: { style: 'thin', color: { rgb: 'E2E8F0' } }
+            }
+          };
+
+          // Header formatting (Black background, white bold text)
+          if (R === 0) {
+            ws[cellRef].s.fill = {
+              fgColor: { rgb: '000000' }
+            };
+            ws[cellRef].s.font = {
+              name: 'Arial',
+              size: 10,
+              bold: true,
+              color: { rgb: 'FFFFFF' }
+            };
+            ws[cellRef].s.alignment.horizontal = 'center';
+          } else {
+            ws[cellRef].s.alignment.horizontal = 'left';
+            
+            // Zebra striping (faint alternate light gray row colors)
+            if (R % 2 === 0) {
+              ws[cellRef].s.fill = {
+                fgColor: { rgb: 'F8FAFC' }
+              };
+            }
+          }
+        }
+      }
+
       // Auto-fit column widths to make sheet look organized and clean
       const colWidths = {};
       excelData.forEach(row => {
@@ -207,12 +253,22 @@ export default function AdminDashboard() {
         });
       });
       ws['!cols'] = Object.keys(colWidths).map(key => ({
-        wch: Math.min(Math.max(colWidths[key] + 3, 10), 50)
+        wch: Math.min(Math.max(colWidths[key] + 4, 10), 50)
       }));
 
-      // Safe sheet name (max 31 chars, no special characters)
-      const cleanSheetName = subjectKey.replace(/[\[\]\:\?\*\/\\ ]/g, '_').substring(0, 30);
-      XLSX.utils.book_append_sheet(wb, ws, cleanSheetName || 'Module_Data');
+      // Clean sheet name: max 31 chars, remove invalid characters
+      const cleanSheetName = subjectName.replace(/[\\\/:\?\*\[\]]/g, '').trim().substring(0, 30);
+      
+      // Prevent duplicate sheet name crash by appending a numeric suffix
+      let finalSheetName = cleanSheetName || 'Module_Data';
+      let suffix = 1;
+      while (sheetNames.has(finalSheetName)) {
+        finalSheetName = `${cleanSheetName.substring(0, 26)}_${suffix}`;
+        suffix++;
+      }
+      sheetNames.add(finalSheetName);
+
+      XLSX.utils.book_append_sheet(wb, ws, finalSheetName);
     });
 
     let filterSuffix = '';
