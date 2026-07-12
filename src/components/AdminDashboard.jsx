@@ -151,6 +151,7 @@ export default function AdminDashboard() {
         
         // Base student rows (includes Intake Year and Month columns)
         const row = {
+          "Record No": getSubNumber(s.id),
           "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
           "Semester": `Semester ${s.semester}`,
           "Class Code": s.class_code || cls.code,
@@ -179,7 +180,8 @@ export default function AdminDashboard() {
       } else {
         // Headers only placeholder
         const emptyHeaders = {
-          "Program": "No records logged for this class",
+          "Record No": "No records logged for this class",
+          "Program": "",
           "Semester": "",
           "Class Code": "",
           "Intake Month": "",
@@ -415,6 +417,14 @@ export default function AdminDashboard() {
   // Derive unique years and months from classes to populate logs filters
   const uniqueYears = Array.from(new Set(classes.map(c => c.year))).sort((a, b) => b - a);
   const uniqueMonths = Array.from(new Set(classes.map(c => c.month))).sort();
+
+  // Sort submissions chronologically to assign a permanent "No. X" display number
+  const sortedSubmissionsChronological = [...submissions].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+  const getSubNumber = (subId) => {
+    const index = sortedSubmissionsChronological.findIndex(sub => sub.id === subId);
+    return index !== -1 ? `No. ${index + 1}` : 'Anonymous';
+  };
 
   // Filter Submissions
   const filteredSubmissions = submissions.filter(s => {
@@ -752,7 +762,7 @@ export default function AdminDashboard() {
                             }}
                           >
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <span style={{ fontWeight: 650, fontSize: '0.95rem' }}>{s.name}</span>
+                              <span style={{ fontWeight: 650, fontSize: '0.95rem' }}>{getSubNumber(s.id)}</span>
                               <span className={`badge ${gradeObj.class}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
                                 {gradeObj.letter} ({s.score})
                               </span>
@@ -802,7 +812,7 @@ export default function AdminDashboard() {
                                 Evaluation Profile Details
                               </span>
                               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.5rem', color: 'var(--text-primary)', marginTop: '0.25rem' }}>
-                                {activeSub.name}
+                                {getSubNumber(activeSub.id)}
                               </h3>
                             </div>
 
@@ -2209,7 +2219,7 @@ export default function AdminDashboard() {
                     Student Evaluation Detail
                   </span>
                   <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.4rem', color: 'var(--text-primary)', marginTop: '0.25rem' }}>
-                    {s.name}
+                    {getSubNumber(s.id)}
                   </h3>
                 </div>
                 <button
