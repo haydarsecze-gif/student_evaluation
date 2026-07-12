@@ -76,9 +76,9 @@
   --danger: #ffffff;
   --danger-glow: rgba(255, 255, 255, 0.08);
   
-  --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.03);
-  --shadow-md: 0 4px 20px rgba(255, 255, 255, 0.04), 0 0 12px rgba(255, 255, 255, 0.02);
-  --shadow-lg: 0 10px 30px rgba(255, 255, 255, 0.05), 0 0 20px rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 1px 3px rgba(255, 255, 255, 0.08);
+  --shadow-md: 0 0 18px rgba(255, 255, 255, 0.12), 0 0 6px rgba(255, 255, 255, 0.04);
+  --shadow-lg: 0 0 30px rgba(255, 255, 255, 0.18), 0 0 10px rgba(255, 255, 255, 0.06);
 }
 
 html {
