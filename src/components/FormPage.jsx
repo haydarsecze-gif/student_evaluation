@@ -13,9 +13,6 @@ export default function FormPage() {
   } = useAppState();
 
   // Form input states
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [program, setProgram] = useState(''); // 'foundation' | 'degree'
   const [semester, setSemester] = useState('');
   const [classId, setClassId] = useState('');
@@ -94,19 +91,6 @@ export default function FormPage() {
 
   const validate = () => {
     const tempErrors = {};
-    if (!name.trim()) tempErrors.name = 'Full Name is required';
-    
-    if (!email.trim()) {
-      tempErrors.email = 'Email address is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      tempErrors.email = 'Invalid email address';
-    }
-
-    if (!phone.trim()) {
-      tempErrors.phone = 'Phone number is required';
-    } else if (!/^\+?[0-9\s-]{6,20}$/.test(phone)) {
-      tempErrors.phone = 'Invalid phone number format';
-    }
 
     if (!program) tempErrors.program = 'Please select a program';
     if (!semester) tempErrors.semester = 'Please select a semester';
@@ -151,9 +135,9 @@ export default function FormPage() {
 
     // Add submission with basic fields + custom answers
     addSubmission({
-      name,
-      email,
-      phone,
+      name: 'Anonymous',
+      email: 'anonymous@anonymous.com',
+      phone: 'N/A',
       program,
       semester: parseInt(semester, 10),
       classId,
@@ -165,9 +149,6 @@ export default function FormPage() {
     });
 
     // Reset Form
-    setName('');
-    setEmail('');
-    setPhone('');
     setProgram('');
     setSemester('');
     setClassId('');
@@ -229,69 +210,12 @@ export default function FormPage() {
             Student Evaluation Portal
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Provide student details, complete academic placement, and fill custom questionnaire.
+            Complete academic placement and fill custom questionnaire.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
           
-          {/* Section 1: Personal Info */}
-          <div style={{
-            borderBottom: '1px solid var(--border-color)',
-            paddingBottom: '1.5rem',
-            marginBottom: '1.5rem'
-          }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1.25rem', color: 'var(--primary)' }}>
-              Personal Information
-            </h3>
-
-            {/* Name */}
-            <div className="form-group">
-              <label className="form-label">
-                Full Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                className={`form-input ${errors.name ? 'error' : ''}`}
-                placeholder="e.g. Bruce Wayne"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-              {errors.name && <span className="form-input-error-msg">{errors.name}</span>}
-            </div>
-
-            {/* Email & Phone */}
-            <div className="grid-cols-2">
-              <div className="form-group">
-                <label className="form-label">
-                  Email Address <span className="required">*</span>
-                </label>
-                <input
-                  type="email"
-                  className={`form-input ${errors.email ? 'error' : ''}`}
-                  placeholder="e.g. bruce@wayne.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-                {errors.email && <span className="form-input-error-msg">{errors.email}</span>}
-              </div>
-
-              <div className="form-group">
-                <label className="form-label">
-                  Phone Number <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  className={`form-input ${errors.phone ? 'error' : ''}`}
-                  placeholder="e.g. 555-1234"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                />
-                {errors.phone && <span className="form-input-error-msg">{errors.phone}</span>}
-              </div>
-            </div>
-          </div>
-
           {/* Section 2: Academic Program & Semester Selection */}
           <div style={{
             borderBottom: '1px solid var(--border-color)',

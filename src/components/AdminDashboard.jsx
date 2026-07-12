@@ -150,9 +150,6 @@ export default function AdminDashboard() {
         
         // Base student rows (includes Intake Year and Month columns)
         const row = {
-          "Student Name": s.name,
-          "Email": s.email,
-          "Phone": s.phone,
           "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
           "Semester": `Semester ${s.semester}`,
           "Class Code": s.class_code || cls.code,
@@ -181,10 +178,7 @@ export default function AdminDashboard() {
       } else {
         // Headers only placeholder
         const emptyHeaders = {
-          "Student Name": "No records logged for this class",
-          "Email": "",
-          "Phone": "",
-          "Program": "",
+          "Program": "No records logged for this class",
           "Semester": "",
           "Class Code": "",
           "Intake Month": "",
@@ -426,8 +420,7 @@ export default function AdminDashboard() {
     const classObj = classes.find(c => c.id === s.classId);
 
     const matchesSearch = 
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.email.toLowerCase().includes(searchQuery.toLowerCase());
+      s.lecturer.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesClass = filterClass ? (s.class_code === filterClass || (classObj && classObj.code.split(',').map(x => x.trim()).includes(filterClass))) : true;
     const matchesSemester = filterSemester ? s.semester === parseInt(filterSemester, 10) : true;
@@ -675,7 +668,7 @@ export default function AdminDashboard() {
                           type="text"
                           className="form-input"
                           style={{ width: '100%' }}
-                          placeholder="Search student or email..."
+                          placeholder="Search lecturer..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -800,9 +793,6 @@ export default function AdminDashboard() {
                               <h3 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1.5rem', color: 'var(--text-primary)', marginTop: '0.25rem' }}>
                                 {activeSub.name}
                               </h3>
-                              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                                {activeSub.email} &bull; {activeSub.phone}
-                              </div>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
@@ -2229,14 +2219,6 @@ export default function AdminDashboard() {
 
               {/* Grid 1: Basic Info & Academic Settings */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', background: 'rgba(0,0,0,0.02)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>EMAIL ADDRESS</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 500, wordBreak: 'break-all' }}>{s.email}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>CONTACT NUMBER</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{s.phone}</span>
-                </div>
                 <div>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PROGRAM &amp; SEMESTER</span>
                   <span style={{ fontSize: '0.85rem', fontWeight: 500, textTransform: 'capitalize' }}>
