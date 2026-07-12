@@ -114,13 +114,14 @@ export default function AdminDashboard() {
     setTimeout(() => setPasswordChangeSuccess(false), 3000);
   };
 
-  // Sentiment rating helper
+  // Sentiment rating helper (Mapped to 1-5 scale)
   const getGrade = (numScore) => {
-    if (numScore >= 85) return { letter: 'Love', class: 'badge-success' };
-    if (numScore >= 70) return { letter: 'Like', class: 'badge-info' };
-    if (numScore >= 55) return { letter: 'Normal', class: 'badge-warning' };
-    if (numScore >= 40) return { letter: 'Not Like', class: 'badge-warning' };
-    return { letter: 'Hate', class: 'badge-danger' };
+    const scoreInt = parseInt(numScore, 10);
+    if (scoreInt === 5) return { letter: 'Love', class: 'badge-success' };
+    if (scoreInt === 4) return { letter: 'Like', class: 'badge-info' };
+    if (scoreInt === 3) return { letter: 'Normal', class: 'badge-warning' };
+    if (scoreInt === 2) return { letter: 'Not Like', class: 'badge-warning' };
+    return { letter: 'Hate', class: 'badge-danger' }; // 1
   };
 
   const handleExportExcel = async () => {
@@ -859,7 +860,7 @@ export default function AdminDashboard() {
                             <div>
                               <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>OVERALL RATING</span>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                                <span style={{ fontSize: '1rem', fontWeight: 750 }}>{activeSub.score} / 100</span>
+                                <span style={{ fontSize: '1rem', fontWeight: 750 }}>{activeSub.score} / 5</span>
                                 <span className={`badge ${gradeObj.class}`}>{gradeObj.letter}</span>
                               </div>
                             </div>
@@ -1045,10 +1046,10 @@ export default function AdminDashboard() {
                   );
                 }
 
-                // Calculate class average score
+                // Calculate class average score (precise decimal)
                 const scores = classSubmissions.map(s => s.score);
                 const avgScore = scores.length > 0 
-                  ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) 
+                  ? scores.reduce((a, b) => a + b, 0) / scores.length 
                   : 0;
 
                 // Sentiment breakdown count
@@ -1100,10 +1101,12 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>AVG SCORE</span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>AVG RATING</span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                          <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{avgScore}%</span>
-                          <span className={`badge ${getGrade(avgScore).class}`}>{getGrade(avgScore).letter}</span>
+                          <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{avgScore > 0 ? `${avgScore.toFixed(1)} / 5` : 'N/A'}</span>
+                          {avgScore > 0 && (
+                            <span className={`badge ${getGrade(Math.round(avgScore)).class}`}>{getGrade(Math.round(avgScore)).letter}</span>
+                          )}
                         </div>
                       </div>
                       <div style={{ gridColumn: 'span 2' }}>
@@ -1185,7 +1188,7 @@ export default function AdminDashboard() {
                                       Class Section: <span style={{ fontWeight: 600, color: 'var(--secondary)', fontFamily: 'var(--font-mono)' }}>{ans.classCode}</span> &bull; Teacher: <span style={{ fontWeight: 600, color: 'var(--primary)' }}>{ans.lecturer}</span>
                                     </div>
                                     <div style={{ fontWeight: 500 }}>
-                                      — Submitted by: <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{ans.studentName}</span> ({ans.studentEmail}) &bull; Score: <span style={{ fontWeight: 700 }}>{ans.score}%</span>
+                                      — Rating: <span style={{ fontWeight: 700 }}>{ans.score} / 5</span>
                                     </div>
                                   </div>
                                 </div>
@@ -2260,7 +2263,7 @@ export default function AdminDashboard() {
                 <div>
                   <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PERFORMANCE RATING</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                    <span style={{ fontSize: '1rem', fontWeight: 700 }}>{s.score} / 100</span>
+                    <span style={{ fontSize: '1rem', fontWeight: 700 }}>{s.score} / 5</span>
                     <span className={`badge ${gradeObj.class}`}>{gradeObj.letter}</span>
                   </div>
                 </div>

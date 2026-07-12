@@ -18,7 +18,7 @@ export default function FormPage() {
   const [classId, setClassId] = useState('');
   const [selectedClassCode, setSelectedClassCode] = useState('');
   const [selectedLecturer, setSelectedLecturer] = useState('');
-  const [score, setScore] = useState(80);
+  const [score, setScore] = useState(4);
 
   // Custom Questions Answers State
   const [customAnswers, setCustomAnswers] = useState({});
@@ -63,13 +63,14 @@ export default function FormPage() {
       .filter(sem => activeList.includes(sem));
   };
 
-  // Sentiment helper
+  // Sentiment helper (Mapped to 1-5 scale)
   const getGrade = (numScore) => {
-    if (numScore >= 85) return { letter: 'Love', class: 'badge-success' };
-    if (numScore >= 70) return { letter: 'Like', class: 'badge-info' };
-    if (numScore >= 55) return { letter: 'Normal', class: 'badge-warning' };
-    if (numScore >= 40) return { letter: 'Not Like', class: 'badge-warning' };
-    return { letter: 'Hate', class: 'badge-danger' };
+    const scoreInt = parseInt(numScore, 10);
+    if (scoreInt === 5) return { letter: 'Love', class: 'badge-success' };
+    if (scoreInt === 4) return { letter: 'Like', class: 'badge-info' };
+    if (scoreInt === 3) return { letter: 'Normal', class: 'badge-warning' };
+    if (scoreInt === 2) return { letter: 'Not Like', class: 'badge-warning' };
+    return { letter: 'Hate', class: 'badge-danger' }; // 1
   };
 
   // Handle custom question answer updates
@@ -154,7 +155,7 @@ export default function FormPage() {
     setClassId('');
     setSelectedClassCode('');
     setSelectedLecturer('');
-    setScore(80);
+    setScore(4);
     setCustomAnswers({});
     setErrors({});
 
@@ -380,7 +381,7 @@ export default function FormPage() {
             {/* Performance (Slider) */}
             <div className="form-group" style={{ marginTop: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label className="form-label">Performance / Score</label>
+                <label className="form-label">Performance / Rating</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                   <span style={{ fontSize: '1.1rem', fontWeight: 'bold', fontFamily: 'var(--font-mono)' }}>{score}</span>
                   <span className={`badge ${grade.class}`} style={{ minWidth: '24px', textAlign: 'center' }}>{grade.letter}</span>
@@ -388,8 +389,8 @@ export default function FormPage() {
               </div>
               <input
                 type="range"
-                min="0"
-                max="100"
+                min="1"
+                max="5"
                 step="1"
                 value={score}
                 onChange={(e) => setScore(e.target.value)}
