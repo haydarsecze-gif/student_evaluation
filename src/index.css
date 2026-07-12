@@ -677,7 +677,46 @@ input:checked + .slider:before {
 .submissions-list-scrollable::-webkit-scrollbar {
   display: none; /* Chrome/Safari/Opera */
 }
+/* Custom Range Slider Webkit & Firefox Override for Monochrome Theme */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--border-color);
+  height: 6px;
+  border-radius: 3px;
+  outline: none;
+}
 
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-card);
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
 
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: var(--primary-hover);
+}
 
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg-card);
+  cursor: pointer;
+  transition: transform var(--transition-fast), background var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
 
+input[type="range"]::-moz-range-thumb:hover {
+  transform: scale(1.15);
+  background: var(--primary-hover);
+}
