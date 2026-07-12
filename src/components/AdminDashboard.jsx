@@ -97,6 +97,7 @@ export default function AdminDashboard() {
   const [qType, setQType] = useState('short'); // 'short' | 'long' | 'radio' | 'checkbox'
   const [qOptionsText, setQOptionsText] = useState(''); // Comma-separated options
   const [qRequired, setQRequired] = useState(false);
+  const [qHorizontal, setQHorizontal] = useState(false);
 
   // Password change states
   const [newPassword, setNewPassword] = useState('');
@@ -168,7 +169,8 @@ export default function AdminDashboard() {
         // Inject custom answers as separate columns
         customQuestions.forEach(q => {
           const val = s.customAnswers ? s.customAnswers[q.id] : '';
-          row[`Question: ${q.label}`] = Array.isArray(val) ? val.join(', ') : (val || '');
+          const cleanLabel = q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
+          row[`Question: ${cleanLabel}`] = Array.isArray(val) ? val.join(', ') : (val || '');
         });
 
         return row;
@@ -380,8 +382,19 @@ export default function AdminDashboard() {
       return;
     }
 
+    let finalLabel = qLabel.trim();
+    if ((qType === 'radio' || qType === 'checkbox') && qHorizontal) {
+      if (!finalLabel.endsWith('[row]')) {
+        finalLabel = `${finalLabel} [row]`;
+      }
+    } else {
+      if (finalLabel.endsWith('[row]')) {
+        finalLabel = finalLabel.replace(/\s*\[row\]$/, '').trim();
+      }
+    }
+
     const questionData = {
-      label: qLabel.trim(),
+      label: finalLabel,
       type: qType,
       options,
       required: qRequired
@@ -402,15 +415,19 @@ export default function AdminDashboard() {
     setQType('short');
     setQOptionsText('');
     setQRequired(false);
+    setQHorizontal(false);
     setCrudError('');
   };
 
   const startEditQuestion = (q) => {
     setEditingQuestion(q);
-    setQLabel(q.label);
+    const isRow = q.label.endsWith('[row]');
+    const cleanLabel = isRow ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
+    setQLabel(cleanLabel);
     setQType(q.type);
     setQOptionsText(q.options.join(', '));
     setQRequired(q.required);
+    setQHorizontal(isRow);
     setCrudError('');
   };
 
@@ -887,7 +904,7 @@ export default function AdminDashboard() {
                                 return (
                                   <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                      {q.label}
+                                      {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
                                     </span>
                                     <span style={{ 
                                       fontSize: '0.85rem', 
@@ -1159,7 +1176,7 @@ export default function AdminDashboard() {
                           <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                               <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary)' }}>
-                                {q.label}
+                                {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
                               </h4>
                               <span style={{ fontSize: '0.75rem', background: 'var(--primary-glow)', color: 'var(--primary)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600, textTransform: 'uppercase' }}>
                                 {q.type} response
@@ -2045,10 +2062,10 @@ export default function AdminDashboard() {
                   <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.05)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                        {q.label} {q.required && <span style={{ color: 'var(--danger)' }}>*</span>}
+                        {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label} {q.required && <span style={{ color: 'var(--danger)' }}>*</span>}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
-                        Type: <span style={{ color: 'var(--secondary)', textTransform: 'capitalize' }}>{q.type}</span> 
+                        Type: <span style={{ color: 'var(--secondary)', textTransform: 'capitalize' }}>{q.type}{q.label.endsWith('[row]') ? ' (Row Layout)' : ''}</span> 
                         {q.options.length > 0 && ` • Options: (${q.options.join(', ')})`}
                       </div>
                     </div>
@@ -2122,17 +2139,32 @@ export default function AdminDashboard() {
               </div>
 
               {(qType === 'radio' || qType === 'checkbox') && (
-                <div className="form-group">
-                  <label className="form-label">Options (Comma separated)</label>
-                  <input
-                    type="text"
-                    className="form-input btn-sm"
-                    placeholder="e.g. Excellent, Good, Poor"
-                    value={qOptionsText}
-                    onChange={(e) => setQOptionsText(e.target.value)}
-                  />
-                  <span className="form-input-hint">Provide at least two choices separated by commas.</span>
-                </div>
+                <>
+                  <div className="form-group">
+                    <label className="form-label">Options (Comma separated)</label>
+                    <input
+                      type="text"
+                      className="form-input btn-sm"
+                      placeholder="e.g. Excellent, Good, Poor"
+                      value={qOptionsText}
+                      onChange={(e) => setQOptionsText(e.target.value)}
+                    />
+                    <span className="form-input-hint">Provide at least two choices separated by commas.</span>
+                  </div>
+
+                  <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', marginBottom: '0.75rem' }}>
+                    <input
+                      type="checkbox"
+                      id="qHorizontal"
+                      checked={qHorizontal}
+                      onChange={(e) => setQHorizontal(e.target.checked)}
+                      style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                    />
+                    <label htmlFor="qHorizontal" className="form-label" style={{ marginBottom: 0, cursor: 'pointer', fontSize: '0.85rem' }}>
+                      Display options horizontally in a row
+                    </label>
+                  </div>
+                </>
               )}
 
               <div className="form-group" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem', marginTop: '1rem' }}>
@@ -2293,7 +2325,7 @@ export default function AdminDashboard() {
                     return (
                       <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                          {q.label}
+                          {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
                         </span>
                         <span style={{ 
                           fontSize: '0.85rem', 

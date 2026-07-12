@@ -422,11 +422,13 @@ export default function FormPage() {
               {customQuestions.map(q => {
                 const error = errors[q.id];
                 const answerValue = customAnswers[q.id];
+                const isRow = q.label.endsWith('[row]');
+                const cleanLabel = isRow ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
 
                 return (
                   <div key={q.id} className="form-group" style={{ marginBottom: '1.75rem' }}>
                     <label className="form-label">
-                      {q.label} {q.required && <span className="required">*</span>}
+                      {cleanLabel} {q.required && <span className="required">*</span>}
                     </label>
 
                     {/* RENDER: Short Answer */}
@@ -454,7 +456,13 @@ export default function FormPage() {
 
                     {/* RENDER: Radio Buttons */}
                     {q.type === 'radio' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: isRow ? 'row' : 'column',
+                        flexWrap: isRow ? 'wrap' : 'nowrap',
+                        gap: isRow ? '1.5rem' : '0.5rem',
+                        marginTop: '0.5rem'
+                      }}>
                         {q.options.map((opt, oIdx) => (
                           <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
                             <input
@@ -472,7 +480,13 @@ export default function FormPage() {
 
                     {/* RENDER: Checkboxes */}
                     {q.type === 'checkbox' && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: isRow ? 'row' : 'column',
+                        flexWrap: isRow ? 'wrap' : 'nowrap',
+                        gap: isRow ? '1.5rem' : '0.5rem',
+                        marginTop: '0.5rem'
+                      }}>
                         {q.options.map((opt, oIdx) => {
                           const isChecked = Array.isArray(answerValue) && answerValue.includes(opt);
                           return (
