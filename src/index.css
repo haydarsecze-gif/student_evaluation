@@ -203,7 +203,7 @@ button, input, select, textarea {
 
 .btn-primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--bg-card);
 }
 .btn-primary:hover {
   background: var(--primary-hover);
