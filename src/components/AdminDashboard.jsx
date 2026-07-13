@@ -94,6 +94,7 @@ export default function AdminDashboard() {
   // Custom Question Form state
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [qLabel, setQLabel] = useState('');
+  const [qSection, setQSection] = useState('');
   const [qType, setQType] = useState('short'); // 'short' | 'long' | 'radio' | 'checkbox'
   const [qOptionsText, setQOptionsText] = useState(''); // Comma-separated options
   const [qRequired, setQRequired] = useState(false);
@@ -448,6 +449,10 @@ export default function AdminDashboard() {
     }
 
     let finalLabel = qLabel.trim();
+    if (qSection.trim()) {
+      finalLabel = `[Section: ${qSection.trim()}] ${finalLabel}`;
+    }
+
     if ((qType === 'radio' || qType === 'checkbox') && qHorizontal) {
       if (!finalLabel.endsWith('[row]')) {
         finalLabel = `${finalLabel} [row]`;
@@ -477,6 +482,7 @@ export default function AdminDashboard() {
 
     // Reset Form
     setQLabel('');
+    setQSection('');
     setQType('short');
     setQOptionsText('');
     setQRequired(false);
@@ -487,8 +493,17 @@ export default function AdminDashboard() {
   const startEditQuestion = (q) => {
     setEditingQuestion(q);
     const isRow = q.label.endsWith('[row]');
-    const cleanLabel = isRow ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
+    
+    // Parse out Section Header prefix if it exists
+    const sectionMatch = q.label.match(/^\[Section:\s*(.*?)\]/);
+    const sectionName = sectionMatch ? sectionMatch[1] : '';
+    const cleanLabel = q.label
+      .replace(/^\[Section:\s*.*?\]/, '')
+      .replace(/\s*\[row\]$/, '')
+      .trim();
+
     setQLabel(cleanLabel);
+    setQSection(sectionName);
     setQType(q.type);
     setQOptionsText(q.options.join(', '));
     setQRequired(q.required);
@@ -2197,6 +2212,18 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleQuestionSubmit}>
               <div className="form-group">
+                <label className="form-label">Section / Heading Title (Optional)</label>
+                <input
+                  type="text"
+                  className="form-input btn-sm"
+                  placeholder="e.g. Class Preparation"
+                  value={qSection}
+                  onChange={(e) => setQSection(e.target.value)}
+                />
+                <span className="form-input-hint">If provided, this question will start a new partitioned section block.</span>
+              </div>
+
+              <div className="form-group">
                 <label className="form-label">Question Label</label>
                 <input
                   type="text"
@@ -2269,9 +2296,11 @@ export default function AdminDashboard() {
                     onClick={() => {
                       setEditingQuestion(null);
                       setQLabel('');
+                      setQSection('');
                       setQType('short');
                       setQOptionsText('');
                       setQRequired(false);
+                      setQHorizontal(false);
                       setCrudError('');
                     }}
                     className="btn btn-secondary btn-sm"
