@@ -190,7 +190,7 @@ export default function AdminDashboard() {
         // Inject custom answers as separate columns
         customQuestions.forEach(q => {
           const val = s.customAnswers ? s.customAnswers[q.id] : '';
-          const cleanLabel = q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
+          const cleanLabel = q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim();
           row[`Question: ${cleanLabel}`] = Array.isArray(val) ? val.join(', ') : (val || '');
         });
 
@@ -969,7 +969,7 @@ export default function AdminDashboard() {
                                 return (
                                   <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                                     <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                                      {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
+                                      {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
                                     </span>
                                     <span style={{ 
                                       fontSize: '0.85rem', 
@@ -1241,7 +1241,7 @@ export default function AdminDashboard() {
                           <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
                               <h4 style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--primary)' }}>
-                                {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
+                                {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
                               </h4>
                               <span style={{ fontSize: '0.75rem', background: 'var(--primary-glow)', color: 'var(--primary)', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600, textTransform: 'uppercase' }}>
                                 {q.type} response
@@ -2127,7 +2127,21 @@ export default function AdminDashboard() {
                   <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: 'rgba(0,0,0,0.05)', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                        {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label} {q.required && <span style={{ color: 'var(--danger)' }}>*</span>}
+                        {(() => {
+                          const sectionMatch = q.label.match(/^\[Section:\s*(.*?)\]/);
+                          const sectionName = sectionMatch ? sectionMatch[1] : null;
+                          const cleanLabel = q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim();
+                          return (
+                            <>
+                              {cleanLabel} {q.required && <span style={{ color: 'var(--danger)' }}>*</span>}
+                              {sectionName && (
+                                <span style={{ marginLeft: '0.5rem', fontSize: '0.7rem', background: 'var(--primary-glow)', color: 'var(--primary)', padding: '0.15rem 0.35rem', borderRadius: '4px', textTransform: 'uppercase', fontWeight: 600 }}>
+                                  {sectionName}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.15rem' }}>
                         Type: <span style={{ color: 'var(--secondary)', textTransform: 'capitalize' }}>{q.type}{q.label.endsWith('[row]') ? ' (Row Layout)' : ''}</span> 
@@ -2390,7 +2404,7 @@ export default function AdminDashboard() {
                     return (
                       <div key={q.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem 1rem', background: 'rgba(0,0,0,0.01)', border: '1px solid var(--border-color)', borderRadius: '6px' }}>
                         <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-                          {q.label.endsWith('[row]') ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label}
+                          {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
                         </span>
                         <span style={{ 
                           fontSize: '0.85rem', 

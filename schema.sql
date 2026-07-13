@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS submissions CASCADE;
 DROP TABLE IF EXISTS classes CASCADE;
 DROP TABLE IF EXISTS lecturers CASCADE;
 DROP TABLE IF EXISTS subjects CASCADE;
+DROP TABLE IF EXISTS custom_questions CASCADE;
 
 -- 1. Create Lecturers Table
 CREATE TABLE lecturers (
@@ -115,19 +116,30 @@ VALUES
   ('c4c4c4c4-4444-4444-4444-444444444444', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d4444444-4444-4444-4444-444444444444']::UUID[], 2026, 'July', 2)
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Custom Questions
+-- Seed Custom Questions (Student Appraisal Form Questions with Section Headers and [row] markers)
 INSERT INTO custom_questions (id, label, type, options, required)
 VALUES
-  ('e1e1e1e1-1111-1111-1111-111111111111', 'Do you have previous programming experience?', 'radio', ARRAY['Yes, extensively', 'Yes, a little', 'No experience'], true),
-  ('e2e2e2e2-2222-2222-2222-222222222222', 'Preferred study resources (Select all that apply)', 'checkbox', ARRAY['Video Tutorials', 'Official Documentation', 'Practical Lab Sheets', 'Peer Discussion'], false),
-  ('e3e3e3e3-3333-3333-3333-333333333333', 'Briefly state your learning goals for this semester:', 'long', ARRAY[]::TEXT[], false)
+  ('e0000001-1111-1111-1111-111111111111', '1. The lecturer is in class on time. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000002-1111-1111-1111-111111111111', '2. The lecturer treats the students with respect. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000003-1111-1111-1111-111111111111', '3. The lecturer show positive attitude about the university. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000004-1111-1111-1111-111111111111', '[Section: Class Preparation] 4. The lecturer is prepared and organised for each class session. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000005-1111-1111-1111-111111111111', '[Section: Class Preparation] 5. Assignment grading and submission dates are clearly stated or posted. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000006-1111-1111-1111-111111111111', '[Section: Delivery & Class Conduct] 6. The assignments and classwork is challenging and make the students think. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000007-1111-1111-1111-111111111111', '[Section: Delivery & Class Conduct] 7. The lecturer''s language is clear and easy to understand. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000008-1111-1111-1111-111111111111', '[Section: Delivery & Class Conduct] 8. The lecturer encourages student''s participation in class and independent thinking. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000009-1111-1111-1111-111111111111', '[Section: Delivery & Class Conduct] 9. The lecturer uses useful teaching aids (for example: images, videos, interactive assignments and activities). [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000010-1111-1111-1111-111111111111', '[Section: Support & Assistance] 10. The lecturer is concerned with whether or not students learn/understand the material/topic. [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000011-1111-1111-1111-111111111111', '[Section: Support & Assistance] 11. The lecturer is available outside of class to help students (for example: by e-mail, social media, phone, appointments). [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000012-1111-1111-1111-111111111111', '[Section: Feedback & Work Evaluation] 12. The lecturer provides useful feedback regarding the students performance. [row]', 'radio', ARRAY['1', '2', '3', '4', '5'], true),
+  ('e0000013-1111-1111-1111-111111111111', '[Section: Overall] 13. Overall how would you grade your lecturer? [row]', 'radio', ARRAY['1 (Strongly Disagree)', '2', '3', '4', '5 (Strongly Agree)'], true),
+  ('e0000014-1111-1111-1111-111111111111', '[Section: Overall] Please provide additional comments or feedback. (Feel free to share both positive and negative opinions related to your lecturer)', 'long', ARRAY[]::TEXT[], true)
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Submissions
+-- Seed Submissions (reset to empty custom answers to match new questionnaire)
 INSERT INTO submissions (name, email, phone, program, semester, class_id, subject_id, score, lecturer, custom_answers)
 VALUES
-  ('John Doe', 'john.doe@university.edu', '555-0199', 'degree', 1, 'c1c1c1c1-1111-1111-1111-111111111111', 'a1a1a1a1-1111-1111-1111-111111111111', 85, 'Dr. Evelyn Martinez', '{"e1e1e1e1-1111-1111-1111-111111111111": "Yes, a little", "e2e2e2e2-2222-2222-2222-222222222222": ["Video Tutorials", "Practical Lab Sheets"], "e3e3e3e3-3333-3333-3333-333333333333": "Build solid logic foundations."}'::JSONB),
-  ('Alice Smith', 'alice.smith@university.edu', '555-0188', 'degree', 2, 'c4c4c4c4-4444-4444-4444-444444444444', 'b4b4b4b4-4444-4444-4444-444411111111', 92, 'Dr. Sarah Jenkins', '{"e1e1e1e1-1111-1111-1111-111111111111": "Yes, extensively", "e2e2e2e2-2222-2222-2222-222222222222": ["Official Documentation", "Practical Lab Sheets"], "e3e3e3e3-3333-3333-3333-333333333333": "Ace the dynamic coding problems."}'::JSONB)
+  ('John Doe', 'john.doe@university.edu', '555-0199', 'degree', 1, 'c1c1c1c1-1111-1111-1111-111111111111', 'a1a1a1a1-1111-1111-1111-111111111111', 85, 'Dr. Evelyn Martinez', '{}'::JSONB),
+  ('Alice Smith', 'alice.smith@university.edu', '555-0188', 'degree', 2, 'c4c4c4c4-4444-4444-4444-444444444444', 'b4b4b4b4-4444-4444-4444-444411111111', 92, 'Dr. Sarah Jenkins', '{}'::JSONB)
 ON CONFLICT DO NOTHING;
 
 -- Disable Row Level Security (RLS) on all tables to allow public anonymous API access

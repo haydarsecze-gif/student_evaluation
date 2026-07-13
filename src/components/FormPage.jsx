@@ -417,17 +417,43 @@ export default function FormPage() {
                 Additional Questionnaire
               </h3>
 
-              {customQuestions.map(q => {
-                const error = errors[q.id];
-                const answerValue = customAnswers[q.id];
-                const isRow = q.label.endsWith('[row]');
-                const cleanLabel = isRow ? q.label.replace(/\s*\[row\]$/, '').trim() : q.label;
+              {(() => {
+                let lastSection = null;
+                return customQuestions.map(q => {
+                  const error = errors[q.id];
+                  const answerValue = customAnswers[q.id];
+                  const isRow = q.label.endsWith('[row]');
+                  const sectionMatch = q.label.match(/^\[Section:\s*(.*?)\]/);
+                  const sectionName = sectionMatch ? sectionMatch[1] : null;
+                  const cleanLabel = q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim();
 
-                return (
-                  <div key={q.id} className="form-group" style={{ marginBottom: '1.75rem' }}>
-                    <label className="form-label">
-                      {cleanLabel} {q.required && <span className="required">*</span>}
-                    </label>
+                  const showSectionHeader = sectionName && sectionName !== lastSection;
+                  if (showSectionHeader) {
+                    lastSection = sectionName;
+                  }
+
+                  return (
+                    <React.Fragment key={q.id}>
+                      {showSectionHeader && (
+                        <div style={{
+                          marginTop: '2.5rem',
+                          marginBottom: '1.25rem',
+                          paddingBottom: '0.5rem',
+                          borderBottom: '1px solid var(--border-color)',
+                          color: 'var(--primary)',
+                          fontWeight: 700,
+                          fontSize: '1rem',
+                          fontFamily: 'var(--font-display)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em'
+                        }}>
+                          {sectionName}
+                        </div>
+                      )}
+                      <div className="form-group" style={{ marginBottom: '1.75rem' }}>
+                        <label className="form-label">
+                          {cleanLabel} {q.required && <span className="required">*</span>}
+                        </label>
 
                     {/* RENDER: Short Answer */}
                     {q.type === 'short' && (
@@ -578,8 +604,10 @@ export default function FormPage() {
 
                     {error && <span className="form-input-error-msg">{error}</span>}
                   </div>
-                );
-              })}
+                </React.Fragment>
+              );
+            });
+          })()}
             </div>
           )}
 
