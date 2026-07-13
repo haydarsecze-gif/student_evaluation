@@ -1,18 +1,13 @@
--- Recreate database tables for the linked Classes, Subjects, and Lecturers schema
-DROP TABLE IF EXISTS submissions CASCADE;
-DROP TABLE IF EXISTS classes CASCADE;
-DROP TABLE IF EXISTS lecturers CASCADE;
-DROP TABLE IF EXISTS subjects CASCADE;
-DROP TABLE IF EXISTS custom_questions CASCADE;
+-- Recreate database tables safely (non-destructively)
 
 -- 1. Create Lecturers Table
-CREATE TABLE lecturers (
+CREATE TABLE IF NOT EXISTS lecturers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL UNIQUE
 );
 
 -- 2. Create Subjects Table (Module Catalog: Module Code, Module Name, Semester, Program)
-CREATE TABLE subjects (
+CREATE TABLE IF NOT EXISTS subjects (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   code TEXT NOT NULL,
@@ -21,13 +16,13 @@ CREATE TABLE subjects (
 );
 
 -- 3. Create Classes Table (Linked directly to a Subject/Module and multiple Lecturers, including manual Intake Year and Month)
-CREATE TABLE classes (
+CREATE TABLE IF NOT EXISTS classes (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  code TEXT NOT NULL, -- e.g. "S2A"
+  code TEXT NOT NULL,
   subject_id UUID REFERENCES subjects(id) ON DELETE CASCADE,
   lecturer_ids UUID[] NOT NULL DEFAULT '{}',
-  year INTEGER NOT NULL, -- Intake Year (e.g. 2026)
-  month TEXT NOT NULL, -- Intake Month (e.g. "July")
+  year INTEGER NOT NULL,
+  month TEXT NOT NULL,
   semester INTEGER NOT NULL
 );
 
@@ -54,7 +49,7 @@ CREATE TABLE IF NOT EXISTS settings (
 );
 
 -- 7. Create Submissions Table
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   email TEXT NOT NULL,
@@ -88,33 +83,8 @@ VALUES
   ('degree', ARRAY[1, 2, 3, 4, 5, 6])
 ON CONFLICT (program) DO NOTHING;
 
--- Seed Lecturers
-INSERT INTO lecturers (id, name)
-VALUES
-  ('d1111111-1111-1111-1111-111111111111', 'Dr. Evelyn Martinez'),
-  ('d2222222-2222-2222-2222-222222222222', 'Prof. Alan Turing'),
-  ('d3333333-3333-3333-3333-333333333333', 'Prof. Marcus Vance'),
-  ('d4444444-4444-4444-4444-444444444444', 'Dr. Sarah Jenkins')
-ON CONFLICT (id) DO NOTHING;
 
--- Seed Subjects (Module Catalog with program types seeded)
-INSERT INTO subjects (id, name, code, semester, program)
-VALUES
-  ('a1a1a1a1-1111-1111-1111-111111111111', 'Introduction to Programming', 'PROG101', 1, 'degree'),
-  ('a2a2a2a2-2222-2222-2222-222222222222', 'Discrete Mathematics', 'MATH105', 1, 'degree'),
-  ('a3a3a3a3-3333-3333-3333-333333333333', 'Data Structures & Algorithms', 'DSA201', 3, 'degree'),
-  ('b4b4b4b4-4444-4444-4444-444411111111', 'Object-Oriented Programming', 'OOP102', 2, 'degree'),
-  ('b5b5b5b5-5555-5555-5555-555511111111', 'Database Systems', 'DB202', 2, 'degree')
-ON CONFLICT (id) DO NOTHING;
 
--- Seed Classes (Each class represents a cohort taking a subject, with multiple lecturers assigned, no separate name column)
-INSERT INTO classes (id, code, subject_id, lecturer_ids, year, month, semester)
-VALUES
-  ('c1c1c1c1-1111-1111-1111-111111111111', 'S1A', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d1111111-1111-1111-1111-111111111111']::UUID[], 2026, 'July', 1),
-  ('c2c2c2c2-2222-2222-2222-222222222222', 'S1B', 'a1a1a1a1-1111-1111-1111-111111111111', ARRAY['d2222222-2222-2222-2222-222222222222']::UUID[], 2026, 'July', 1),
-  ('c3c3c3c3-3333-3333-3333-333333333333', 'S2A', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d3333333-3333-3333-3333-333333333333', 'd4444444-4444-4444-4444-444444444444']::UUID[], 2026, 'July', 2),
-  ('c4c4c4c4-4444-4444-4444-444444444444', 'S2B', 'b4b4b4b4-4444-4444-4444-444411111111', ARRAY['d4444444-4444-4444-4444-444444444444']::UUID[], 2026, 'July', 2)
-ON CONFLICT (id) DO NOTHING;
 
 -- Seed Custom Questions (Student Appraisal Form Questions with Section Headers and [row] markers)
 INSERT INTO custom_questions (id, label, type, options, required)
@@ -135,12 +105,8 @@ VALUES
   ('e0000014-1111-1111-1111-111111111111', '[Section: Overall] Please provide additional comments or feedback. (Feel free to share both positive and negative opinions related to your lecturer)', 'long', ARRAY[]::TEXT[], true)
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Submissions (reset to empty custom answers to match new questionnaire)
-INSERT INTO submissions (name, email, phone, program, semester, class_id, subject_id, score, lecturer, custom_answers)
-VALUES
-  ('John Doe', 'john.doe@university.edu', '555-0199', 'degree', 1, 'c1c1c1c1-1111-1111-1111-111111111111', 'a1a1a1a1-1111-1111-1111-111111111111', 85, 'Dr. Evelyn Martinez', '{}'::JSONB),
-  ('Alice Smith', 'alice.smith@university.edu', '555-0188', 'degree', 2, 'c4c4c4c4-4444-4444-4444-444444444444', 'b4b4b4b4-4444-4444-4444-444411111111', 92, 'Dr. Sarah Jenkins', '{}'::JSONB)
-ON CONFLICT DO NOTHING;
+
+
 
 -- Disable Row Level Security (RLS) on all tables to allow public anonymous API access
 ALTER TABLE lecturers DISABLE ROW LEVEL SECURITY;
