@@ -479,67 +479,95 @@ export default function FormPage() {
                     )}
 
                     {/* RENDER: Radio Buttons */}
-                    {q.type === 'radio' && (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: isRow ? 'row' : 'column',
-                        flexWrap: isRow ? 'wrap' : 'nowrap',
-                        gap: isRow ? '0.75rem' : '0.5rem',
-                        marginTop: '0.5rem'
-                      }}>
-                        {q.options.map((opt, oIdx) => {
-                          const isSelected = answerValue === opt;
-                          if (isRow) {
-                            return (
-                              <label
-                                key={oIdx}
-                                style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  padding: '0.5rem 1.25rem',
-                                  borderRadius: '9999px',
-                                  border: '2px solid',
-                                  borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
-                                  background: isSelected ? 'var(--primary-glow)' : 'var(--bg-card)',
-                                  color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
-                                  fontWeight: isSelected ? 650 : 500,
-                                  fontSize: '0.85rem',
-                                  cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  boxShadow: isSelected ? '0 4px 10px rgba(0, 0, 0, 0.08)' : 'none',
-                                  transform: isSelected ? 'scale(1.02)' : 'none',
-                                  userSelect: 'none',
-                                  flex: '1 1 0px',
-                                  minWidth: '85px'
-                                }}
-                              >
-                                <input
-                                  type="radio"
-                                  name={`custom_${q.id}`}
-                                  checked={isSelected}
-                                  onChange={() => handleCustomChange(q.id, opt)}
-                                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
-                                />
-                                <span>{opt}</span>
-                              </label>
-                            );
-                          }
-                          return (
-                            <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-                              <input
-                                type="radio"
-                                name={`custom_${q.id}`}
-                                checked={answerValue === opt}
-                                onChange={() => handleCustomChange(q.id, opt)}
-                                style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
-                              />
-                              <span>{opt}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    )}
+                    {q.type === 'radio' && (() => {
+                      const hasDisagree = q.options[0]?.includes('Strongly Disagree');
+                      const hasAgree = q.options[q.options.length - 1]?.includes('Strongly Agree');
+                      
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem', width: '100%' }}>
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: isRow ? 'row' : 'column',
+                            flexWrap: isRow ? 'wrap' : 'nowrap',
+                            gap: isRow ? '0.75rem' : '0.5rem',
+                            width: '100%'
+                          }}>
+                            {q.options.map((opt, oIdx) => {
+                              const isSelected = answerValue === opt;
+                              const cleanDisplayVal = opt
+                                .replace(/\s*\(Strongly Disagree\)/g, '')
+                                .replace(/\s*\(Strongly Agree\)/g, '')
+                                .trim();
+
+                              if (isRow) {
+                                return (
+                                  <label
+                                    key={oIdx}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      padding: '0.5rem 1.25rem',
+                                      borderRadius: '9999px',
+                                      border: '2px solid',
+                                      borderColor: isSelected ? 'var(--primary)' : 'var(--border-color)',
+                                      background: isSelected ? 'var(--primary-glow)' : 'var(--bg-card)',
+                                      color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
+                                      fontWeight: isSelected ? 650 : 500,
+                                      fontSize: '0.85rem',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s ease',
+                                      boxShadow: isSelected ? '0 4px 10px rgba(0, 0, 0, 0.08)' : 'none',
+                                      transform: isSelected ? 'scale(1.02)' : 'none',
+                                      userSelect: 'none',
+                                      flex: '1 1 0px',
+                                      minWidth: '60px'
+                                    }}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`custom_${q.id}`}
+                                      checked={isSelected}
+                                      onChange={() => handleCustomChange(q.id, opt)}
+                                      style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }}
+                                    />
+                                    <span>{cleanDisplayVal}</span>
+                                  </label>
+                                );
+                              }
+                              return (
+                                <label key={oIdx} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                  <input
+                                    type="radio"
+                                    name={`custom_${q.id}`}
+                                    checked={isSelected}
+                                    onChange={() => handleCustomChange(q.id, opt)}
+                                    style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', cursor: 'pointer' }}
+                                  />
+                                  <span>{cleanDisplayVal}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          
+                          {/* Outer Helper labels aligned below the pills row */}
+                          {isRow && (hasDisagree || hasAgree) && (
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              padding: '0 0.75rem',
+                              fontSize: '0.75rem',
+                              color: 'var(--text-secondary)',
+                              fontWeight: 500,
+                              marginTop: '0.2rem'
+                            }}>
+                              <span>{hasDisagree ? 'Strongly Disagree' : ''}</span>
+                              <span>{hasAgree ? 'Strongly Agree' : ''}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* RENDER: Checkboxes */}
                     {q.type === 'checkbox' && (
