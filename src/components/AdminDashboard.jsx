@@ -143,7 +143,8 @@ export default function AdminDashboard() {
     });
 
     if (filteredSubmissionsForExport.length === 0) {
-      showAlert("No evaluation records match the chosen download filters.", "Export Error");
+      const debugInfo = `Total Submissions: ${submissions.length}, Total Classes: ${classes.length}, Filters: Semester="${downloadSemester}", Year="${downloadYear}", Month="${downloadMonth}". First Sub classId: "${submissions[0]?.classId}", First Class ID: "${classes[0]?.id}"`;
+      showAlert(`No evaluation records match the chosen download filters.\n\nDiagnostic Info: ${debugInfo}`, "Export Error");
       return;
     }
 
