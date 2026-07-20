@@ -132,7 +132,10 @@ export default function AdminDashboard() {
     // Filter submissions based on active download filters (Semester, Year, Month)
     const filteredSubmissionsForExport = submissions.filter(s => {
       const cls = classes.find(c => c.id === s.classId);
-      if (!cls) return false;
+      if (!cls) {
+        console.warn(`[Excel Export Debug] Submission classId mismatch: ${s.classId} (database class_id: ${s.class_id}). Available class IDs:`, classes.map(c => c.id));
+        return false;
+      }
       const matchesSemester = downloadSemester ? s.semester === parseInt(downloadSemester, 10) : true;
       const matchesYear = downloadYear ? cls.year === parseInt(downloadYear, 10) : true;
       const matchesMonth = downloadMonth ? cls.month === downloadMonth : true;
