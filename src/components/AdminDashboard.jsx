@@ -745,20 +745,27 @@ export default function AdminDashboard() {
             <button
               onClick={() => setRecordsSubView('individual')}
               className={`btn btn-sm ${recordsSubView === 'individual' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center', width: '100%' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
             >
-              Individual Student Logs ({submissions.length})
+              Individual Logs ({submissions.length})
             </button>
             <button
               onClick={() => setRecordsSubView('classSummary')}
               className={`btn btn-sm ${recordsSubView === 'classSummary' ? 'btn-primary' : 'btn-secondary'}`}
-              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center', width: '100%' }}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
             >
-              Grouped Class Feedback Summaries
+              Class Feedback
+            </button>
+            <button
+              onClick={() => setRecordsSubView('summaryDashboard')}
+              className={`btn btn-sm ${recordsSubView === 'summaryDashboard' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', flex: 1, justifyContent: 'center' }}
+            >
+              Forms Summary Dashboard
             </button>
           </div>
 
-          {recordsSubView === 'individual' ? (
+          {recordsSubView === 'individual' && (
             /* SUB-VIEW 1: INDIVIDUAL LOGS - MASTER-DETAIL SPLIT LAYOUT */
             (() => {
               const activeSub = filteredSubmissions.find(s => s.id === selectedSubId) || filteredSubmissions[0];
@@ -1025,9 +1032,9 @@ export default function AdminDashboard() {
 
                 </div>
               );
-            })()
-          ) : (
-            /* SUB-VIEW 2: GROUPED CLASS SUMMARIES - MULTI-FILTER FEEDBACK DASHBOARD */
+            })())}
+
+          {recordsSubView === 'classSummary' && (
             <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
               {/* Advanced Filter Bar Panel */}
@@ -1328,6 +1335,189 @@ export default function AdminDashboard() {
             </div>
           )}
 
+          {recordsSubView === 'summaryDashboard' && (() => {
+            if (filteredSubmissions.length === 0) {
+              return (
+                <div className="glass-panel animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Submissions Found</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                    Adjust your filters to see the summary data.
+                  </div>
+                </div>
+              );
+            }
+
+            // Calculate overall score average
+            const ratings = filteredSubmissions.map(s => s.score);
+            const overallAvg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+            const overallGrade = getGrade(Math.round(overallAvg));
+
+            // Count program type distribution
+            const progDistribution = { degree: 0, foundation: 0 };
+            filteredSubmissions.forEach(s => {
+              if (s.program === 'degree') progDistribution.degree++;
+              else if (s.program === 'foundation') progDistribution.foundation++;
+            });
+
+            return (
+              <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* General Stats Dashboard Grid */}
+                <div className="glass-panel" style={{
+                  padding: '1.5rem',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '1.5rem',
+                  background: 'rgba(0,0,0,0.01)'
+                }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>TOTAL RESPONSES</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                      {filteredSubmissions.length}
+                    </span>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>LECTURER AVERAGE RATING</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                      <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{overallAvg.toFixed(2)} / 5</span>
+                      <span className={`badge ${overallGrade.class}`}>{overallGrade.letter}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PROGRAM TYPE RATIO</span>
+                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--secondary)' }}>
+                      Degree: {progDistribution.degree} • Foundation: {progDistribution.foundation}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Questionnaire Summaries */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                    Timetable & Custom Question Summary Charts
+                  </h3>
+
+                  {/* Lecturer Rating Chart */}
+                  <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                      Lecturer Performance / Rating Distribution (1 - 5)
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                      {[5, 4, 3, 2, 1].map(star => {
+                        const count = ratings.filter(r => r === star).length;
+                        const pct = ratings.length > 0 ? (count / ratings.length) * 100 : 0;
+                        return (
+                          <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
+                            <div style={{ width: '80px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                              {star} Star{star !== 1 && 's'}
+                            </div>
+                            <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                              <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
+                            </div>
+                            <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                              {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Custom Questions loop */}
+                  {customQuestions.map(q => {
+                    // Gather answers
+                    const answers = filteredSubmissions.map(s => s.customAnswers ? s.customAnswers[q.id] : null).filter(Boolean);
+
+                    // For Radio & Checkbox
+                    if (q.type === 'radio' || q.type === 'checkbox') {
+                      const counts = {};
+                      // Pre-populate standard options to ensure they all display even if 0 responses
+                      q.options.forEach(opt => {
+                        counts[opt] = 0;
+                      });
+
+                      answers.forEach(ans => {
+                        if (Array.isArray(ans)) {
+                          ans.forEach(val => {
+                            counts[val] = (counts[val] || 0) + 1;
+                          });
+                        } else {
+                          counts[ans] = (counts[ans] || 0) + 1;
+                        }
+                      });
+
+                      const totalSelections = q.type === 'checkbox' 
+                        ? Object.values(counts).reduce((a, b) => a + b, 0)
+                        : answers.length;
+
+                      return (
+                        <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
+                          <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                            {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
+                          </h4>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            {q.options.map(opt => {
+                              const count = counts[opt] || 0;
+                              const pct = totalSelections > 0 ? (count / totalSelections) * 100 : 0;
+                              return (
+                                <div key={opt} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
+                                  <div style={{ width: '180px', fontWeight: 500, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                                    {opt}
+                                  </div>
+                                  <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                                    <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
+                                  </div>
+                                  <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                    {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // For Text Questions (short, long)
+                    return (
+                      <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                          {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
+                        </h4>
+                        <div style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem',
+                          maxHeight: '220px',
+                          overflowY: 'auto',
+                          paddingRight: '0.5rem'
+                        }}>
+                          {answers.length === 0 ? (
+                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No responses yet.</span>
+                          ) : (
+                            answers.map((ans, idx) => (
+                              <div key={idx} style={{
+                                padding: '0.75rem 1rem',
+                                background: 'rgba(0,0,0,0.01)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '6px',
+                                fontSize: '0.85rem',
+                                color: 'var(--text-primary)',
+                                lineHeight: '1.4'
+                              }}>
+                                "{ans}"
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
