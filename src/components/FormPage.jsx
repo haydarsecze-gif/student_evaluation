@@ -191,9 +191,7 @@ export default function FormPage() {
       {showSuccess && (
         <div className="glass-panel animate-fade-in" style={{
           padding: '1.25rem',
-          marginBottom: '1.5rem',
-          borderLeft: '4px solid var(--success)',
-          background: 'var(--success-glow)'
+          marginBottom: '1.5rem'
         }}>
           <div>
             <h4 style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Registration Complete!</h4>

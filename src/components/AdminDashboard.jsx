@@ -849,7 +849,7 @@ export default function AdminDashboard() {
                             style={{
                                 padding: '1.25rem',
                                 cursor: 'pointer',
-                                borderLeft: isActive ? '4px solid var(--primary)' : '1px solid var(--border-color)',
+                                border: isActive ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                                 background: isActive ? 'var(--primary-glow)' : 'var(--bg-card)',
                                 transform: isActive ? 'scale(1.01)' : 'none',
                                 transition: 'all 0.2s ease',

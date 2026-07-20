@@ -105,7 +105,6 @@ function AppContent() {
           flexDirection: 'column',
           alignItems: 'center',
           gap: '1rem',
-          borderLeft: '4px solid var(--danger)',
           background: 'var(--bg-card)'
         }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>Database Connection Error</h2>
