@@ -49,6 +49,7 @@ export default function AdminDashboard() {
   const [filterProgram, setFilterProgram] = useState(''); // '' | 'foundation' | 'degree'
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
+  const [filterLecturer, setFilterLecturer] = useState('');
 
   // Dedicated Excel Exporter Download Filter states
   const [downloadSemester, setDownloadSemester] = useState('');
@@ -65,6 +66,7 @@ export default function AdminDashboard() {
   const [summaryYear, setSummaryYear] = useState('');
   const [summaryMonth, setSummaryMonth] = useState('');
   const [summarySectionCode, setSummarySectionCode] = useState('');
+  const [summaryLecturer, setSummaryLecturer] = useState('');
 
   // Detail Modal popup selection state
   const [selectedSubmissionForModal, setSelectedSubmissionForModal] = useState(null);
@@ -523,20 +525,20 @@ export default function AdminDashboard() {
     return index !== -1 ? `No. ${index + 1}` : 'Anonymous';
   };
 
-  // Filter Submissions
   const filteredSubmissions = submissions.filter(s => {
     const classObj = classes.find(c => c.id === s.classId);
 
     const matchesSearch = 
       s.lecturer.toLowerCase().includes(searchQuery.toLowerCase());
     
+    const matchesLecturer = filterLecturer ? s.lecturer === filterLecturer : true;
     const matchesClass = filterClass ? (s.class_code === filterClass || (classObj && classObj.code.split(',').map(x => x.trim()).includes(filterClass))) : true;
     const matchesSemester = filterSemester ? s.semester === parseInt(filterSemester, 10) : true;
     const matchesProgram = filterProgram ? s.program === filterProgram : true;
     const matchesYear = filterYear ? (classObj ? classObj.year === parseInt(filterYear, 10) : false) : true;
     const matchesMonth = filterMonth ? (classObj ? classObj.month === filterMonth : false) : true;
 
-    return matchesSearch && matchesClass && matchesSemester && matchesProgram && matchesYear && matchesMonth;
+    return matchesSearch && matchesLecturer && matchesClass && matchesSemester && matchesProgram && matchesYear && matchesMonth;
   });
 
   // Calculate Metrics
@@ -788,6 +790,17 @@ export default function AdminDashboard() {
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
                       </div>
+
+                      <select
+                        className="form-input"
+                        value={filterLecturer}
+                        onChange={(e) => setFilterLecturer(e.target.value)}
+                      >
+                        <option value="">All Lecturers</option>
+                        {lecturers.map(l => (
+                          <option key={l.id} value={l.name}>{l.name}</option>
+                        ))}
+                      </select>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                         <select className="form-input" value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
@@ -1047,6 +1060,21 @@ export default function AdminDashboard() {
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                  {/* Filter 0: Lecturer */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>LECTURER</span>
+                    <select
+                      className="form-input"
+                      value={summaryLecturer}
+                      onChange={(e) => setSummaryLecturer(e.target.value)}
+                    >
+                      <option value="">All Lecturers</option>
+                      {lecturers.map(l => (
+                        <option key={l.id} value={l.name}>{l.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Filter 1: Subject / Module */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>MODULE / SUBJECT</span>
@@ -1138,6 +1166,7 @@ export default function AdminDashboard() {
                 const classSubmissions = submissions.filter(s => {
                   const classObj = classes.find(c => c.id === s.classId);
                   
+                  const matchesLecturer = summaryLecturer ? s.lecturer === summaryLecturer : true;
                   const matchesSubject = summarySubjectId ? s.subjectId === summarySubjectId : true;
                   const matchesYear = summaryYear ? (classObj && classObj.year === parseInt(summaryYear, 10)) : true;
                   const matchesMonth = summaryMonth ? (classObj && classObj.month === summaryMonth) : true;
@@ -1146,7 +1175,7 @@ export default function AdminDashboard() {
                   const specificCode = s.class_code || (classObj ? classObj.code.split(',').map(x => x.trim())[0] : '');
                   const matchesSection = summarySectionCode ? specificCode === summarySectionCode : true;
 
-                  return matchesSubject && matchesYear && matchesMonth && matchesSection;
+                  return matchesLecturer && matchesSubject && matchesYear && matchesMonth && matchesSection;
                 });
 
                 if (classSubmissions.length === 0) {
@@ -1336,20 +1365,9 @@ export default function AdminDashboard() {
           )}
 
           {recordsSubView === 'summaryDashboard' && (() => {
-            if (filteredSubmissions.length === 0) {
-              return (
-                <div className="glass-panel animate-fade-in" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                  <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Submissions Found</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                    Adjust your filters to see the summary data.
-                  </div>
-                </div>
-              );
-            }
-
-            // Calculate overall score average
+            // Calculate overall stats
             const ratings = filteredSubmissions.map(s => s.score);
-            const overallAvg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+            const overallAvg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
             const overallGrade = getGrade(Math.round(overallAvg));
 
             // Count program type distribution
@@ -1362,159 +1380,258 @@ export default function AdminDashboard() {
             return (
               <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                 
-                {/* General Stats Dashboard Grid */}
-                <div className="glass-panel" style={{
-                  padding: '1.5rem',
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '1.5rem',
-                  background: 'rgba(0,0,0,0.01)'
-                }}>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>TOTAL RESPONSES</span>
-                    <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
-                      {filteredSubmissions.length}
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>LECTURER AVERAGE RATING</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
-                      <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{overallAvg.toFixed(2)} / 5</span>
-                      <span className={`badge ${overallGrade.class}`}>{overallGrade.letter}</span>
+                {/* Advanced Dashboard Filter Bar Panel */}
+                <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+                    Forms Summary Dashboard
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+                    Filter questionnaire statistics and response charts by lecturer, program, semester, cohort intake, and class sections.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                    {/* Filter 1: Lecturer */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>LECTURER</span>
+                      <select
+                        className="form-input"
+                        value={filterLecturer}
+                        onChange={(e) => setFilterLecturer(e.target.value)}
+                      >
+                        <option value="">All Lecturers</option>
+                        {lecturers.map(l => (
+                          <option key={l.id} value={l.name}>{l.name}</option>
+                        ))}
+                      </select>
                     </div>
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PROGRAM TYPE RATIO</span>
-                    <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--secondary)' }}>
-                      Degree: {progDistribution.degree} • Foundation: {progDistribution.foundation}
-                    </span>
+
+                    {/* Filter 2: Program */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>PROGRAM</span>
+                      <select className="form-input" value={filterProgram} onChange={(e) => setFilterProgram(e.target.value)}>
+                        <option value="">All Programs</option>
+                        <option value="foundation">Foundation</option>
+                        <option value="degree">Degree</option>
+                      </select>
+                    </div>
+
+                    {/* Filter 3: Semester */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>SEMESTER</span>
+                      <select className="form-input" value={filterSemester} onChange={(e) => setFilterSemester(e.target.value)}>
+                        <option value="">All Semesters</option>
+                        {[1,2,3,4,5,6].map(sem => (
+                          <option key={sem} value={sem}>Sem {sem}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filter 4: Intake Year */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>INTAKE YEAR</span>
+                      <select className="form-input" value={filterYear} onChange={(e) => setFilterYear(e.target.value)}>
+                        <option value="">All Years</option>
+                        {uniqueYears.map(yr => (
+                          <option key={yr} value={yr}>{yr}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filter 5: Intake Month */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>INTAKE MONTH</span>
+                      <select className="form-input" value={filterMonth} onChange={(e) => setFilterMonth(e.target.value)}>
+                        <option value="">All Months</option>
+                        {uniqueMonths.map(m => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Filter 6: Class Code */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>CLASS CODE</span>
+                      <select className="form-input" value={filterClass} onChange={(e) => setFilterClass(e.target.value)}>
+                        <option value="">All Class Sections</option>
+                        {(() => {
+                          const codesSet = new Set();
+                          classes.forEach(c => {
+                            c.code.split(',').map(x => x.trim()).filter(Boolean).forEach(code => {
+                              codesSet.add(code);
+                            });
+                          });
+                          return Array.from(codesSet).sort().map(code => (
+                            <option key={code} value={code}>{code}</option>
+                          ));
+                        })()}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                {/* Questionnaire Summaries */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                    Timetable & Custom Question Summary Charts
-                  </h3>
+                {filteredSubmissions.length === 0 ? (
+                  <div className="glass-panel" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: '1rem', fontWeight: 500 }}>No Submissions Found</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                      Adjust your filters to see the summary data.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* General Stats Dashboard Grid */}
+                    <div className="glass-panel" style={{
+                      padding: '1.5rem',
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '1.5rem',
+                      background: 'rgba(0,0,0,0.01)'
+                    }}>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>TOTAL RESPONSES</span>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--primary)' }}>
+                          {filteredSubmissions.length}
+                        </span>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>LECTURER AVERAGE RATING</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.15rem' }}>
+                          <span style={{ fontSize: '1.5rem', fontWeight: 700 }}>{overallAvg.toFixed(2)} / 5</span>
+                          <span className={`badge ${overallGrade.class}`}>{overallGrade.letter}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', fontWeight: 600 }}>PROGRAM TYPE RATIO</span>
+                        <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--secondary)' }}>
+                          Degree: {progDistribution.degree} • Foundation: {progDistribution.foundation}
+                        </span>
+                      </div>
+                    </div>
 
-                  {/* Lecturer Rating Chart */}
-                  <div className="glass-panel" style={{ padding: '1.5rem' }}>
-                    <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                      Lecturer Performance / Rating Distribution (1 - 5)
-                    </h4>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                      {[5, 4, 3, 2, 1].map(star => {
-                        const count = ratings.filter(r => r === star).length;
-                        const pct = ratings.length > 0 ? (count / ratings.length) * 100 : 0;
+                    {/* Questionnaire Summaries */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      <h3 style={{ fontSize: '1.2rem', fontWeight: 700, borderBottom: '2px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                        Timetable & Custom Question Summary Charts
+                      </h3>
+
+                      {/* Lecturer Rating Chart */}
+                      <div className="glass-panel" style={{ padding: '1.5rem' }}>
+                        <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                          Lecturer Performance / Rating Distribution (1 - 5)
+                        </h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                          {[5, 4, 3, 2, 1].map(star => {
+                            const count = ratings.filter(r => r === star).length;
+                            const pct = ratings.length > 0 ? (count / ratings.length) * 100 : 0;
+                            return (
+                              <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
+                                <div style={{ width: '80px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                  {star} Star{star !== 1 && 's'}
+                                </div>
+                                <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                                  <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
+                                </div>
+                                <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                  {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Custom Questions loop */}
+                      {customQuestions.map(q => {
+                        // Gather answers
+                        const answers = filteredSubmissions.map(s => s.customAnswers ? s.customAnswers[q.id] : null).filter(Boolean);
+
+                        // For Radio & Checkbox
+                        if (q.type === 'radio' || q.type === 'checkbox') {
+                          const counts = {};
+                          // Pre-populate standard options to ensure they all display even if 0 responses
+                          q.options.forEach(opt => {
+                            counts[opt] = 0;
+                          });
+
+                          answers.forEach(ans => {
+                            if (Array.isArray(ans)) {
+                              ans.forEach(val => {
+                                counts[val] = (counts[val] || 0) + 1;
+                              });
+                            } else {
+                              counts[ans] = (counts[ans] || 0) + 1;
+                            }
+                          });
+
+                          const totalSelections = q.type === 'checkbox' 
+                            ? Object.values(counts).reduce((a, b) => a + b, 0)
+                            : answers.length;
+
+                          return (
+                            <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
+                              <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                                {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
+                              </h4>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {q.options.map(opt => {
+                                  const count = counts[opt] || 0;
+                                  const pct = totalSelections > 0 ? (count / totalSelections) * 100 : 0;
+                                  return (
+                                    <div key={opt} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
+                                      <div style={{ width: '180px', fontWeight: 500, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                                        {opt}
+                                      </div>
+                                      <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
+                                        <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
+                                      </div>
+                                      <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                        {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        // For Text Questions (short, long)
                         return (
-                          <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
-                            <div style={{ width: '80px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                              {star} Star{star !== 1 && 's'}
-                            </div>
-                            <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
-                              <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
-                            </div>
-                            <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                              {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
+                          <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
+                            <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
+                              {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
+                            </h4>
+                            <div style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '0.5rem',
+                              maxHeight: '220px',
+                              overflowY: 'auto',
+                              paddingRight: '0.5rem'
+                            }}>
+                              {answers.length === 0 ? (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No responses yet.</span>
+                              ) : (
+                                answers.map((ans, idx) => (
+                                  <div key={idx} style={{
+                                    padding: '0.75rem 1rem',
+                                    background: 'rgba(0,0,0,0.01)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '6px',
+                                    fontSize: '0.85rem',
+                                    color: 'var(--text-primary)',
+                                    lineHeight: '1.4'
+                                  }}>
+                                    "{ans}"
+                                  </div>
+                                ))
+                              )}
                             </div>
                           </div>
                         );
                       })}
                     </div>
-                  </div>
-
-                  {/* Custom Questions loop */}
-                  {customQuestions.map(q => {
-                    // Gather answers
-                    const answers = filteredSubmissions.map(s => s.customAnswers ? s.customAnswers[q.id] : null).filter(Boolean);
-
-                    // For Radio & Checkbox
-                    if (q.type === 'radio' || q.type === 'checkbox') {
-                      const counts = {};
-                      // Pre-populate standard options to ensure they all display even if 0 responses
-                      q.options.forEach(opt => {
-                        counts[opt] = 0;
-                      });
-
-                      answers.forEach(ans => {
-                        if (Array.isArray(ans)) {
-                          ans.forEach(val => {
-                            counts[val] = (counts[val] || 0) + 1;
-                          });
-                        } else {
-                          counts[ans] = (counts[ans] || 0) + 1;
-                        }
-                      });
-
-                      const totalSelections = q.type === 'checkbox' 
-                        ? Object.values(counts).reduce((a, b) => a + b, 0)
-                        : answers.length;
-
-                      return (
-                        <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
-                          <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1.25rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                            {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
-                          </h4>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                            {q.options.map(opt => {
-                              const count = counts[opt] || 0;
-                              const pct = totalSelections > 0 ? (count / totalSelections) * 100 : 0;
-                              return (
-                                <div key={opt} style={{ display: 'flex', alignItems: 'center', gap: '1rem', fontSize: '0.85rem' }}>
-                                  <div style={{ width: '180px', fontWeight: 500, color: 'var(--text-primary)', wordBreak: 'break-word' }}>
-                                    {opt}
-                                  </div>
-                                  <div style={{ flexGrow: 1, background: 'var(--border-color)', height: '16px', borderRadius: '8px', overflow: 'hidden' }}>
-                                    <div style={{ background: 'var(--primary)', width: `${pct}%`, height: '100%', borderRadius: '8px' }}></div>
-                                  </div>
-                                  <div style={{ width: '120px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                                    {count} response{count !== 1 && 's'} ({pct.toFixed(0)}%)
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // For Text Questions (short, long)
-                    return (
-                      <div key={q.id} className="glass-panel" style={{ padding: '1.5rem' }}>
-                        <h4 style={{ fontSize: '1.05rem', fontWeight: 650, marginBottom: '1rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.5rem' }}>
-                          {q.label.replace(/^\[Section:\s*.*?\]/, '').replace(/\s*\[row\]$/, '').trim()}
-                        </h4>
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.5rem',
-                          maxHeight: '220px',
-                          overflowY: 'auto',
-                          paddingRight: '0.5rem'
-                        }}>
-                          {answers.length === 0 ? (
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No responses yet.</span>
-                          ) : (
-                            answers.map((ans, idx) => (
-                              <div key={idx} style={{
-                                padding: '0.75rem 1rem',
-                                background: 'rgba(0,0,0,0.01)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '6px',
-                                fontSize: '0.85rem',
-                                color: 'var(--text-primary)',
-                                lineHeight: '1.4'
-                              }}>
-                                "{ans}"
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                </div>
+                  </>
+                )}
               </div>
             );
           })()}
