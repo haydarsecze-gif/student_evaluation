@@ -169,26 +169,22 @@ export default function AdminDashboard() {
       
       const excelData = moduleSubmissions.map(s => {
         const cls = classes.find(c => c.id === s.classId);
+        const classCodeVal = (s.class_code || (cls ? cls.code : '')).trim();
         
         const row = {
           "Record No": getSubNumber(s.id),
           "Module Code": subjectObj ? subjectObj.code : 'N/A',
           "Module Name": subjectObj ? subjectObj.name : 'N/A',
+          "Class Code": classCodeVal || '',
+          "Program": s.program === 'foundation' ? 'Foundation' : 'Degree',
+          "Semester": `Semester ${s.semester}`,
+          "Intake Month": cls ? cls.month : 'N/A',
+          "Intake Year": cls ? cls.year : 'N/A',
+          "Performance Rating": s.score,
+          "Sentiment Rating": getGrade(s.score).letter,
+          "Lecturer Assigned": s.lecturer || 'N/A',
+          "Submission Date": new Date(s.timestamp).toLocaleString()
         };
-
-        const classCodeVal = (s.class_code || (cls ? cls.code : '')).trim();
-        if (classCodeVal) {
-          row["Class Code"] = classCodeVal;
-        }
-
-        row["Program"] = s.program === 'foundation' ? 'Foundation' : 'Degree';
-        row["Semester"] = `Semester ${s.semester}`;
-        row["Intake Month"] = cls ? cls.month : 'N/A';
-        row["Intake Year"] = cls ? cls.year : 'N/A';
-        row["Performance Rating"] = s.score;
-        row["Sentiment Rating"] = getGrade(s.score).letter;
-        row["Lecturer Assigned"] = s.lecturer;
-        row["Submission Date"] = new Date(s.timestamp).toLocaleString();
 
         // Inject custom answers as separate columns
         customQuestions.forEach(q => {
